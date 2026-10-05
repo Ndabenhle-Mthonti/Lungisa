@@ -1,0 +1,41 @@
+---
+description: Lungisa project rules
+alwaysApply: true
+---
+You are helping a junior developer build "Lungisa", a property maintenance web app, in 14 days. Keep everything simple, readable and easy to explain.
+
+PRODUCT
+- Three roles log in: landlord, tenant, provider. Each role gets its own small area: /landlord, /tenant, /provider.
+- Job flow: tenant reports with a MANDATORY photo -> landlord assigns a provider -> provider taps "I am on my way", fixes it, uploads a MANDATORY proof photo -> tenant sees Done.
+- Job status values (enum, in this order only): pending -> assigned -> on_the_way -> done. Landlord "In Progress" = assigned + on_the_way.
+- Status colours: Pending red #D93025, In Progress/Assigned/On the way yellow #F9AB00, Done green #1E8E3E. Always show the status word as well as the colour.
+- Tenant app: exactly 2 screens (Home/My Requests, Report New Problem). No stats, no tables.
+- Provider app: exactly 1 screen (My Jobs Today) with big buttons.
+- Landlord app: stats cards, jobs table, assign modal, job details.
+- A tenant must never see other tenants' jobs, the provider list or landlord stats. A provider must never see unassigned jobs, other providers, or be able to assign jobs.
+
+TECH
+- React + Vite (JavaScript or TypeScript as already set up), React Router, @supabase/supabase-js, TanStack Query, React Hook Form + Zod, browser-image-compression.
+- Supabase for Postgres, Auth, Storage (private buckets: job-photos, proof-photos), Realtime, Edge Functions.
+- Folder structure: src/app, src/features/{auth,tenant,landlord,provider}, src/components, src/lib, src/types. Supabase calls live in features/*/api files, never directly in components.
+- Database changes are SQL files in supabase/migrations. Never suggest editing production tables by hand.
+
+SECURITY (non-negotiable)
+- Row Level Security on every table. Never write an "allow all" policy. Never trust the frontend: security is enforced in the database.
+- Only the anon key is used in the React app. The service_role key is only used in Edge Functions and is never put in frontend code or committed.
+- Photos: private buckets, shown with signed URLs. JPEG/PNG only, max 5 MB. Compress in the browser and remove EXIF location data.
+- Never use dangerouslySetInnerHTML with user text. Validate inputs in the form and in the database.
+
+PERFORMANCE
+- Paginate lists (20 rows at a time, keyset pagination by created_at). Select only needed columns. Count stats in SQL, never by loading all rows.
+- Code-split routes with React.lazy.
+
+UX
+- Mobile-first. Tenant buttons 56px high, provider buttons 64px high and full width. Plain language, e.g. "Send to Landlord".
+- Always show loading, empty and error states, and a clear success message.
+
+HOW TO WORK
+- Only do what the current prompt asks. Do not add features, libraries or files that were not requested.
+- Before big changes, briefly say which files you will create or edit.
+- After changes, tell me how to test it in 3-5 simple steps.
+- If something in the prompt conflicts with these rules, stop and ask me.

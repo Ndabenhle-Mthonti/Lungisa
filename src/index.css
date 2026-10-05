@@ -1,0 +1,40 @@
+/*
+  Base page styles. Tokens are loaded first in main.jsx, so these
+  variables already exist. One place sets the font and page colour;
+  components only worry about themselves.
+*/
+
+*,
+*::before,
+*::after {
+  /* Padding stays inside the width. Full-width buttons then fit the screen. */
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background: var(--color-background);
+  line-height: 1.4;
+}
+
+main {
+  padding: var(--space-lg);
+}
+
+/*
+  Hides text visually but leaves it for screen readers.
+  Used when a control's meaning is an icon or a spinning circle.
+*/
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

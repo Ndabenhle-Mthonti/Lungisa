@@ -1,0 +1,16 @@
+.empty-state {
+  padding: var(--space-lg) var(--space-md);
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.empty-state-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.empty-state-message {
+  margin: var(--space-sm) 0 0;
+}

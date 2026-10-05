@@ -1,0 +1,76 @@
+/*
+  Mobile-first button. min-height (not a fixed height) so a long label
+  can wrap instead of spilling off a narrow screen.
+*/
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin: 0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  /* Stops the browser waiting to see if a tap is a double-tap zoom. */
+  touch-action: manipulation;
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.button-md {
+  min-height: 40px;
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* Tenant actions. The product rule asks for 56px targets. */
+.button-lg {
+  min-height: 56px;
+  padding: var(--space-sm) var(--space-lg);
+}
+
+/*
+  Provider actions. 64px tall and full width so the control is easy
+  to hit with a thumb while the person is standing at the job.
+*/
+.button-xl {
+  min-height: 64px;
+  width: 100%;
+  padding: var(--space-sm) var(--space-lg);
+}
+
+/*
+  The token list has no separate brand blue. Primary uses the text
+  colour as a solid fill, and the page background as the label colour,
+  so we stay inside the shared palette.
+*/
+.button-primary {
+  background: var(--color-text);
+  color: var(--color-background);
+  border: 1px solid var(--color-text);
+}
+
+.button-secondary {
+  background: var(--color-background);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+/* Danger reuses the pending red. It already means "needs attention". */
+.button-danger {
+  background: var(--color-pending);
+  color: var(--color-background);
+  border: 1px solid var(--color-pending);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

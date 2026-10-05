@@ -1,0 +1,39 @@
+/*
+  Shared look for Lungisa. Import this file once, from src/main.jsx.
+
+  Components must use these names (var(--color-pending)) and not paste
+  hex codes of their own. When a colour changes, it changes here only.
+
+  Status colours come from the product rules:
+  - pending is red
+  - assigned and "on the way" share the yellow in-progress colour
+  - done is green
+  Colour is never the only signal. StatusBadge always prints the word too,
+  because some people cannot tell red from green.
+*/
+
+:root {
+  --color-pending: #D93025;
+  --color-in-progress: #F9AB00;
+  --color-done: #1E8E3E;
+
+  --color-text: #202124;
+  --color-background: #ffffff;
+  --color-border: #dadce0;
+
+  /*
+    A 4px spacing scale. Mobile screens are narrow, so most layout
+    uses --space-sm and --space-md rather than large gaps.
+  */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /*
+    The phone's own font. A downloaded webfont would slow the first
+    paint, and the app has to feel fast on a mid-range phone.
+  */
+  --font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
