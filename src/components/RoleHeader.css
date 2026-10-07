@@ -1,0 +1,13 @@
+.role-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.role-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}

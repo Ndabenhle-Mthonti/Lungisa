@@ -1,7 +1,12 @@
+import RoleHeader from '../../components/RoleHeader.jsx'
+
 export default function TenantPage() {
   return (
-    <main>
-      <h1>Tenant</h1>
-    </main>
+    <>
+      <RoleHeader title="Tenant" />
+      <main>
+        <p>Tenant</p>
+      </main>
+    </>
   )
 }

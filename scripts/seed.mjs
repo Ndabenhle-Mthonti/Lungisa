@@ -240,15 +240,43 @@ function buildJobs(tenants) {
       status: STATUSES[index % STATUSES.length],
       description: samples[index % samples.length],
       providerKey: PROVIDER_FOR_CATEGORY[category],
+      isUrgent: false,
     })
   }
+
+  // "Not fixed" is tested on a finished job, so each tenant needs a few of those.
+  for (const tenant of tenants) {
+    const theirs = jobs.filter((job) => job.tenant === tenant)
+    let doneCount = theirs.filter((job) => job.status === 'done').length
+    for (const job of theirs) {
+      if (doneCount >= 3) break
+      if (job.status !== 'done') {
+        job.status = 'done'
+        doneCount += 1
+      }
+    }
+  }
+
+  // Urgent is only for jobs still waiting: pending or assigned. About five of those.
+  const waiting = jobs.filter((job) => job.status === 'pending' || job.status === 'assigned')
+  const urgent = []
+  for (const tenant of tenants) {
+    const match = waiting.find((job) => job.tenant === tenant && !urgent.includes(job))
+    if (match) urgent.push(match)
+  }
+  for (const job of waiting) {
+    if (urgent.length >= 5) break
+    if (!urgent.includes(job)) urgent.push(job)
+  }
+  for (const job of urgent) job.isUrgent = true
+
   return jobs
 }
 
 // A job can only move one step at a time: pending, then assigned, then on the way, then done.
 async function createJobs(landlordId, tenants, providers) {
   const jobs = buildJobs(tenants)
-  const counts = { pending: 0, assigned: 0, on_the_way: 0, done: 0 }
+  const counts = { pending: 0, assigned: 0, on_the_way: 0, done: 0, urgent: 0 }
 
   for (const job of jobs) {
     const tenantClient = await asUser(job.tenant.email)
@@ -262,11 +290,14 @@ async function createJobs(landlordId, tenants, providers) {
           category: job.category,
           description: job.description,
           photo_path: PLACEHOLDER_PHOTO,
+          is_urgent: job.isUrgent,
         })
         .select('id')
         .single(),
       'Create job',
     )
+
+    if (job.isUrgent) counts.urgent += 1
 
     if (job.status === 'pending') {
       counts.pending += 1
@@ -339,6 +370,8 @@ function printSummary(counts) {
       counts.on_the_way +
       ', done ' +
       counts.done +
+      ', urgent ' +
+      counts.urgent +
       ')',
   )
 }

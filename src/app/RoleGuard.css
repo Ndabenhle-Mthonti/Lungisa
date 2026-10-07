@@ -1,0 +1,8 @@
+.account-not-set-up {
+  max-width: 28rem;
+}
+
+.account-not-set-up p {
+  margin: 0 0 var(--space-lg);
+  font-size: 1.125rem;
+}
