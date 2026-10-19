@@ -5,7 +5,10 @@ import LoginPage from '../features/auth/LoginPage.jsx'
 import RoleGuard from './RoleGuard.jsx'
 
 const LandlordPage = lazy(() => import('../features/landlord/LandlordPage.jsx'))
+const PeoplePage = lazy(() => import('../features/landlord/PeoplePage.jsx'))
 const TenantPage = lazy(() => import('../features/tenant/TenantPage.jsx'))
+const ReportPage = lazy(() => import('../features/tenant/ReportPage.jsx'))
+const RequestPage = lazy(() => import('../features/tenant/RequestPage.jsx'))
 const ProviderPage = lazy(() => import('../features/provider/ProviderPage.jsx'))
 const ForgotPasswordPage = lazy(() => import('../features/auth/ForgotPasswordPage.jsx'))
 const ResetPasswordPage = lazy(() => import('../features/auth/ResetPasswordPage.jsx'))
@@ -30,10 +33,34 @@ export default function App() {
             }
           />
           <Route
+            path="/landlord/people"
+            element={
+              <RoleGuard role="landlord">
+                <PeoplePage />
+              </RoleGuard>
+            }
+          />
+          <Route
             path="/tenant"
             element={
               <RoleGuard role="tenant">
                 <TenantPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/tenant/report"
+            element={
+              <RoleGuard role="tenant">
+                <ReportPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/tenant/requests/:jobId"
+            element={
+              <RoleGuard role="tenant">
+                <RequestPage />
               </RoleGuard>
             }
           />

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "security:check": "node --env-file=.env.local scripts/security-check.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

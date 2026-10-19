@@ -1,0 +1,91 @@
+.request-page {
+  max-width: 28rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  font-size: 1.125rem;
+}
+
+.request-page .button {
+  width: 100%;
+}
+
+.request-page .modal-header .button {
+  width: auto;
+}
+
+.request-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.request-detail p,
+.request-detail h2 {
+  margin: 0;
+}
+
+.request-detail h2 {
+  font-size: 1.125rem;
+}
+
+.request-error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.request-error p,
+.request-error-text,
+.request-reopen p {
+  margin: 0;
+  color: var(--color-pending);
+  font-weight: 700;
+}
+
+.request-sent-back {
+  margin: 0;
+  font-weight: 700;
+}
+
+.request-reopened {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.request-reopen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.request-note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-weight: 700;
+}
+
+.request-note textarea {
+  min-height: 56px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--color-text);
+  background: var(--color-background);
+  resize: vertical;
+}
+
+.request-note textarea:focus-visible {
+  outline: 3px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.request-reopen .button {
+  width: 100%;
+}

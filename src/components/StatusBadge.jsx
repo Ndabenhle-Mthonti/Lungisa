@@ -4,9 +4,8 @@ import './StatusBadge.css'
   The only job statuses, in lifecycle order:
   pending -> assigned -> on_the_way -> done
 
-  Assigned and on_the_way are both "in progress" for the landlord,
-  so they share the yellow. The words stay different so a tenant can
-  tell "someone was chosen" from "the provider is travelling now".
+  Assigned and on_the_way share the yellow. A screen can pass its own
+  label, such as the tenant words from tenantJobStatus.
 
   The class names live in this map on purpose. Building a class from
   the raw status string would let an unexpected value inject a class.
@@ -19,14 +18,15 @@ const STATUSES = {
   done: { label: 'Done', className: 'status-badge-done' },
 }
 
-export default function StatusBadge({ status }) {
+export default function StatusBadge({ status, label }) {
   const known = STATUSES[status]
+  const text = label || known?.label || status
 
   // An unknown value still prints the word. A blank badge would hide
   // the problem. The neutral style makes the mistake obvious in the UI.
   if (!known) {
-    return <span className="status-badge status-badge-unknown">{status}</span>
+    return <span className="status-badge status-badge-unknown">{text}</span>
   }
 
-  return <span className={`status-badge ${known.className}`}>{known.label}</span>
+  return <span className={`status-badge ${known.className}`}>{text}</span>
 }
