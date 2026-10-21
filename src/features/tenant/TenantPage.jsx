@@ -4,19 +4,38 @@ import EmptyState from '../../components/EmptyState.jsx'
 import RoleHeader from '../../components/RoleHeader.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import { formatReportedDate, tenantJobStatus } from '../../lib/jobStatus.js'
+import { useJobsRealtime } from '../../lib/useJobsRealtime.js'
+import { usePullToRefresh } from '../../lib/usePullToRefresh.js'
+import { useAuth } from '../auth/AuthProvider.jsx'
 import { categoryLabel } from './api.js'
 import { useTenantRequests } from './useTenantRequests.js'
 import './TenantPage.css'
 
 export default function TenantPage() {
   const navigate = useNavigate()
+  const { session } = useAuth()
+  useJobsRealtime('tenant_id', session?.user?.id)
   const requests = useTenantRequests()
+  const pullLabel = usePullToRefresh(() => requests.refetch())
   const jobs = requests.data?.pages.flatMap((page) => page.rows) ?? []
 
   return (
     <>
       <RoleHeader title="Home" />
       <main className="tenant-home">
+        {pullLabel ? (
+          <p className="pull-refresh" role="status">
+            {pullLabel}
+          </p>
+        ) : null}
+        <Button
+          variant="secondary"
+          size="lg"
+          loading={requests.isFetching && !requests.isFetchingNextPage}
+          onClick={() => requests.refetch()}
+        >
+          Refresh
+        </Button>
         <Button variant="primary" size="lg" onClick={() => navigate('/tenant/report')}>
           + Report New Problem
         </Button>

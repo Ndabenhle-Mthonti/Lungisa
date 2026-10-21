@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './PhotoViewer.css'
+import Button from './Button.jsx'
 import Modal from './Modal.jsx'
 
 /*
@@ -17,11 +18,12 @@ import Modal from './Modal.jsx'
   This component only displays them. It does not upload or compress.
 */
 
-export default function PhotoViewer({ src, thumbSrc, alt, onOpen, onThumbError }) {
+export default function PhotoViewer({ src, thumbSrc, alt, onOpen, onThumbError, label }) {
   const [open, setOpen] = useState(false)
   const thumb = thumbSrc || src
 
   function openPhoto() {
+    if (!src && label) return
     if (onOpen) onOpen()
     setOpen(true)
   }
@@ -32,9 +34,15 @@ export default function PhotoViewer({ src, thumbSrc, alt, onOpen, onThumbError }
 
   return (
     <>
-      <button type="button" className="photo-viewer-thumb" onClick={openPhoto}>
-        <img src={thumb} alt={alt} loading="lazy" onError={onThumbError} />
-      </button>
+      {label ? (
+        <Button variant="secondary" size="xl" onClick={openPhoto} disabled={!src}>
+          {label}
+        </Button>
+      ) : (
+        <button type="button" className="photo-viewer-thumb" onClick={openPhoto}>
+          <img src={thumb} alt={alt} loading="lazy" onError={onThumbError} />
+        </button>
+      )}
       <Modal open={open} title="Photo" onClose={closePhoto}>
         <img className="photo-viewer-full" src={src} alt={alt} />
       </Modal>

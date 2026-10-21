@@ -44,6 +44,11 @@
   min-height: 64px;
   width: 100%;
   padding: var(--space-sm) var(--space-lg);
+  font-size: 1.125rem;
+}
+
+a.button {
+  text-decoration: none;
 }
 
 /*

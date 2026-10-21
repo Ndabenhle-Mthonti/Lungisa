@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import Button from '../../components/Button.jsx'
+import { useJobsRealtime } from '../../lib/useJobsRealtime.js'
 import { useAuth } from '../auth/AuthProvider.jsx'
 import { fetchLandlordStats } from './api.js'
 import JobsTable from './JobsTable.jsx'
@@ -8,6 +9,7 @@ import './LandlordPage.css'
 
 export default function LandlordPage() {
   const { session } = useAuth()
+  useJobsRealtime('landlord_id', session?.user?.id)
   const stats = useQuery({
     queryKey: ['landlord-stats', session?.user?.id],
     queryFn: fetchLandlordStats,

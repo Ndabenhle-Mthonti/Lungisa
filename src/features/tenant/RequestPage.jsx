@@ -9,12 +9,16 @@ import Spinner from '../../components/Spinner.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import { useSignedUrl } from '../../lib/photos.js'
 import { formatReportedDate, tenantJobStatus } from '../../lib/jobStatus.js'
+import { useJobsRealtime } from '../../lib/useJobsRealtime.js'
+import { useAuth } from '../auth/AuthProvider.jsx'
 import { categoryLabel, fetchTenantRequest, reopenRequest } from './api.js'
 import './RequestPage.css'
 
 export default function RequestPage() {
   const { jobId } = useParams()
   const navigate = useNavigate()
+  const { session } = useAuth()
+  useJobsRealtime('tenant_id', session?.user?.id)
   const [sentBack, setSentBack] = useState(false)
   const request = useQuery({
     queryKey: ['tenant-request', jobId],
