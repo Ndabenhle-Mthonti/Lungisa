@@ -5,6 +5,7 @@ import LoginPage from '../features/auth/LoginPage.jsx'
 import RoleGuard from './RoleGuard.jsx'
 
 const LandlordPage = lazy(() => import('../features/landlord/LandlordPage.jsx'))
+const JobDetailsPage = lazy(() => import('../features/landlord/JobDetailsPage.jsx'))
 const PeoplePage = lazy(() => import('../features/landlord/PeoplePage.jsx'))
 const TenantPage = lazy(() => import('../features/tenant/TenantPage.jsx'))
 const ReportPage = lazy(() => import('../features/tenant/ReportPage.jsx'))
@@ -29,6 +30,14 @@ export default function App() {
             element={
               <RoleGuard role="landlord">
                 <LandlordPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/landlord/jobs/:jobId"
+            element={
+              <RoleGuard role="landlord">
+                <JobDetailsPage />
               </RoleGuard>
             }
           />

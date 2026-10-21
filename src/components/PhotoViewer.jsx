@@ -13,14 +13,16 @@ import Modal from './Modal.jsx'
   close button, and focus behaviour. The full-size image repeats the
   alt text for anyone who lands on the picture itself.
 
-  `src` will later be a short-lived signed URL from private storage.
-  This component only displays it. It does not upload or compress.
+  `src` is the full photo. Pass `thumbSrc` when the list should show a smaller picture.
+  This component only displays them. It does not upload or compress.
 */
 
-export default function PhotoViewer({ src, alt }) {
+export default function PhotoViewer({ src, thumbSrc, alt, onOpen, onThumbError }) {
   const [open, setOpen] = useState(false)
+  const thumb = thumbSrc || src
 
   function openPhoto() {
+    if (onOpen) onOpen()
     setOpen(true)
   }
 
@@ -31,7 +33,7 @@ export default function PhotoViewer({ src, alt }) {
   return (
     <>
       <button type="button" className="photo-viewer-thumb" onClick={openPhoto}>
-        <img src={src} alt={alt} />
+        <img src={thumb} alt={alt} loading="lazy" onError={onThumbError} />
       </button>
       <Modal open={open} title="Photo" onClose={closePhoto}>
         <img className="photo-viewer-full" src={src} alt={alt} />

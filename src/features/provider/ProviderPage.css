@@ -1,0 +1,44 @@
+.provider-jobs {
+  max-width: 28rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.provider-job {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.provider-job-issue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.provider-job p {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.provider-jobs-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.provider-jobs-error p {
+  margin: 0;
+  color: var(--color-pending);
+  font-weight: 700;
+}

@@ -1,0 +1,11 @@
+.urgent-tag {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 999px;
+  background: var(--color-pending);
+  color: var(--color-background);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}

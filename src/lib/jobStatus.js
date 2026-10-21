@@ -1,3 +1,15 @@
+const CATEGORY_LABELS = {
+  plumbing: 'Plumbing',
+  electrical: 'Electrical',
+  lock: 'Lock',
+  appliance: 'Appliance',
+  other: 'Other',
+}
+
+export function categoryLabel(category) {
+  return CATEGORY_LABELS[category] ?? 'Other'
+}
+
 // Tenant words for a job status. Every tenant screen uses this function.
 // Colours stay on StatusBadge: pending is red, assigned and on_the_way are yellow, done is green.
 export function tenantJobStatus(status) {

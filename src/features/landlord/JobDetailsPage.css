@@ -1,0 +1,175 @@
+.job-details {
+  max-width: 40rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-lg);
+}
+
+.job-details-success {
+  margin: 0;
+  font-weight: 700;
+}
+
+.job-details-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.job-details-unit {
+  margin: 0;
+  font-weight: 700;
+}
+
+.job-details-issue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.job-details-description,
+.job-details-body p,
+.job-details-body h2 {
+  margin: 0;
+}
+
+.job-details-body h2 {
+  margin-bottom: var(--space-xs);
+  font-size: 1.125rem;
+}
+
+.job-details-person,
+.job-details-photo {
+  width: 100%;
+}
+
+.job-details-person dl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+}
+
+.job-details-person div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-sm);
+}
+
+.job-details-person dt {
+  font-weight: 700;
+}
+
+.job-details-person dd {
+  margin: 0;
+}
+
+.job-details-person a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.job-details .photo-viewer-thumb img {
+  width: 160px;
+  height: 160px;
+}
+
+.job-details-missing {
+  font-weight: 700;
+}
+
+.job-details-photo-skeleton,
+.job-details-skeleton span {
+  display: block;
+  border-radius: 8px;
+  background: var(--color-border);
+  animation: job-details-pulse 1.2s ease-in-out infinite;
+}
+
+.job-details-photo-skeleton {
+  width: 160px;
+  height: 160px;
+}
+
+.job-details-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.job-details-skeleton span {
+  height: 1.5rem;
+}
+
+.job-details-skeleton span:first-child {
+  width: 40%;
+  height: 2rem;
+}
+
+.job-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--space-md);
+  border-left: 2px solid var(--color-border);
+}
+
+.job-timeline li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 0 var(--space-md) var(--space-md);
+}
+
+.job-timeline li::before {
+  content: '';
+  position: absolute;
+  top: 0.35rem;
+  left: calc(var(--space-md) * -1 - 5px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-text);
+}
+
+.job-timeline-label {
+  font-weight: 700;
+}
+
+.job-timeline-note {
+  font-weight: 400;
+}
+
+.job-details-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.job-details-error p {
+  margin: 0;
+  color: var(--color-pending);
+  font-weight: 700;
+}
+
+@keyframes job-details-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .job-details-photo-skeleton,
+  .job-details-skeleton span {
+    animation: none;
+  }
+}

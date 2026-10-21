@@ -1,0 +1,85 @@
+.assign-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.assign-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.assign-summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.assign-summary dt {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.assign-summary dd {
+  margin: 0;
+}
+
+.assign-issue-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  font-weight: 700;
+}
+
+.assign-description {
+  display: block;
+  margin-top: var(--space-xs);
+}
+
+.assign-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-weight: 700;
+}
+
+.assign-field select {
+  min-height: 40px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--color-text);
+  background: var(--color-background);
+}
+
+.assign-field select:focus-visible {
+  outline: 3px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.assign-error {
+  margin: 0;
+  color: var(--color-pending);
+  font-weight: 700;
+}
+
+div.assign-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.assign-error p {
+  margin: 0;
+}
+
+.assign-form > .button {
+  align-self: flex-start;
+}

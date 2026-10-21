@@ -43,6 +43,36 @@ export async function uploadPhoto({ bucket, path, file }) {
   }
 }
 
+// A list thumbnail. Asks storage for a 120px-wide picture, and uses the full file if this project cannot resize.
+export function useJobThumbnail(path, { plain = false } = {}) {
+  return useQuery({
+    queryKey: ['job-thumbnail', path, plain ? 'plain' : 'small'],
+    enabled: Boolean(path),
+    staleTime: 50 * 60 * 1000,
+    gcTime: 55 * 60 * 1000,
+    queryFn: () => signJobThumbnail(path, { plain }),
+  })
+}
+
+async function signJobThumbnail(path, { plain }) {
+  if (!plain) {
+    const small = await createJobPhotoUrl(path, { width: 120, resize: 'cover' })
+    if (small) return { url: small, transformed: true }
+  }
+
+  const full = await createJobPhotoUrl(path)
+  if (!full) throw new Error('The photo could not be opened. Please try again.')
+  return { url: full, transformed: false }
+}
+
+async function createJobPhotoUrl(path, transform) {
+  const { data, error } = await supabase.storage
+    .from('job-photos')
+    .createSignedUrl(path, SIGNED_URL_SECONDS, transform ? { transform } : undefined)
+  if (error || !data?.signedUrl) return null
+  return data.signedUrl
+}
+
 // Returns a signed link that lasts about 60 minutes. The same path reuses the cached link until it is close to expiring.
 export function useSignedUrl(bucket, path) {
   return useQuery({

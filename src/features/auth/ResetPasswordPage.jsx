@@ -26,7 +26,8 @@ function readResetLink() {
   const hasError = Boolean(
     hash.get('error') || hash.get('error_code') || search.get('error') || search.get('error_code'),
   )
-  const fromEmail = hash.get('type') === 'recovery' || search.get('type') === 'recovery'
+  const linkType = hash.get('type') || search.get('type')
+  const fromEmail = linkType === 'recovery' || linkType === 'invite'
   return { hasError, fromEmail }
 }
 

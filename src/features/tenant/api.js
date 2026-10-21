@@ -4,17 +4,7 @@ import { compressPhoto, reportPhotoPath, uploadPhoto } from '../../lib/photos.js
 const CATEGORIES = ['plumbing', 'electrical', 'lock', 'appliance', 'other']
 const PAGE_SIZE = 20
 
-const CATEGORY_LABELS = {
-  plumbing: 'Plumbing',
-  electrical: 'Electrical',
-  lock: 'Lock',
-  appliance: 'Appliance',
-  other: 'Other',
-}
-
-export function categoryLabel(category) {
-  return CATEGORY_LABELS[category] ?? 'Other'
-}
+export { categoryLabel } from '../../lib/jobStatus.js'
 
 // The flat label and the ids the report must store. The tenant does not type these.
 export async function fetchTenantPlace() {

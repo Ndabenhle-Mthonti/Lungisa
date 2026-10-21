@@ -1,27 +1,22 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
-import RoleHeader from '../../components/RoleHeader.jsx'
 import Spinner from '../../components/Spinner.jsx'
 import { addUnit, fetchPeople, invitePerson, tradeLabel, TRADES } from './api.js'
+import LandlordShell from './LandlordShell.jsx'
 import './PeoplePage.css'
 
 export default function PeoplePage() {
-  const navigate = useNavigate()
   const people = useQuery({
     queryKey: ['landlord-people'],
     queryFn: fetchPeople,
   })
 
   return (
-    <>
-      <RoleHeader title="People" />
-      <main className="people-page">
-        <Button variant="secondary" size="md" onClick={() => navigate('/landlord')}>
-          Back
-        </Button>
+    <LandlordShell>
+      <div className="people-page">
+        <h1>People</h1>
 
         {people.isPending ? <Spinner /> : null}
 
@@ -55,8 +50,8 @@ export default function PeoplePage() {
             />
           </>
         ) : null}
-      </main>
-    </>
+      </div>
+    </LandlordShell>
   )
 }
 

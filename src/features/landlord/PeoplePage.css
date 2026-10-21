@@ -7,6 +7,11 @@
   font-size: 1.125rem;
 }
 
+.people-page h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
 .people-page h2 {
   margin: 0 0 var(--space-sm);
   font-size: 1.25rem;
