@@ -133,10 +133,16 @@ export default function ReportPage() {
                 placeholder={place.isLoading ? 'Loading your flat...' : ''}
               />
             </label>
+            {place.isPending ? <p role="status">Loading your flat.</p> : null}
             {place.isError ? (
-              <p className="report-error" role="alert">
-                {place.error instanceof Error ? place.error.message : 'Your flat could not be loaded. Please try again.'}
-              </p>
+              <div className="report-error-block">
+                <p className="report-error" role="alert">
+                  {place.error instanceof Error ? place.error.message : 'Your flat could not be loaded. Please try again.'}
+                </p>
+                <Button variant="secondary" size="lg" onClick={() => place.refetch()}>
+                  Retry
+                </Button>
+              </div>
             ) : null}
 
             <label className="report-field">
@@ -152,7 +158,7 @@ export default function ReportPage() {
 
             <div className="report-photo">
               {previewUrl ? (
-                <img src={previewUrl} alt="Preview of the problem" />
+                <img src={previewUrl} alt="Preview of the problem" loading="lazy" />
               ) : null}
               <Button
                 type="button"
@@ -168,6 +174,7 @@ export default function ReportPage() {
                 type="file"
                 accept="image/*"
                 capture="environment"
+                aria-label="Photo of the problem"
                 onChange={choosePhoto}
               />
             </div>

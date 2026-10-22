@@ -1,57 +1,45 @@
 import { compressPhoto, proofPhotoPath, uploadPhoto } from '../../lib/photos.js'
 import { supabase } from '../../lib/supabaseClient.js'
 
-// Open jobs for the signed-in provider only. Oldest first.
-// Pending jobs have no provider, and Row Level Security hides every other row.
-export async function fetchProviderJobs() {
+const PAGE_SIZE = 20
+
+// Open jobs for the signed-in provider only. Oldest first, 20 at a time.
+// provider_open_jobs reads the next page directly. Asking the jobs table for
+// every open row made Postgres walk thousands of jobs before it could return 20.
+export async function fetchProviderJobs(cursor) {
   const { data: sessionData } = await supabase.auth.getSession()
   const providerId = sessionData.session?.user?.id
   if (!providerId) throw new Error('Please sign in again.')
 
-  const { data, error } = await supabase
-    .from('jobs')
-    .select(
-      [
-        'id',
-        'landlord_id',
-        'category',
-        'description',
-        'status',
-        'is_urgent',
-        'photo_path',
-        'created_at',
-        'unit:units!jobs_unit_id_fkey(label)',
-        'tenant:profiles!jobs_tenant_id_fkey(full_name, phone)',
-      ].join(', '),
-    )
-    .eq('provider_id', providerId)
-    .neq('status', 'done')
-    .order('created_at', { ascending: true })
-    .order('id', { ascending: true })
-
+  const { data, error } = await supabase.rpc('provider_open_jobs', {
+    cursor_created: cursor?.createdAt ?? null,
+    cursor_id: cursor?.id ?? null,
+  })
   if (error) throw new Error('Jobs could not be loaded. Please try again.')
 
-  return (data ?? []).map((row) => {
-    const unit = first(row.unit)
-    const tenant = first(row.tenant)
-    return {
-      id: row.id,
-      landlordId: row.landlord_id,
-      category: row.category,
-      description: row.description ?? '',
-      status: row.status,
-      urgent: row.is_urgent === true,
-      photoPath: row.photo_path ?? '',
-      createdAt: row.created_at,
-      unitLabel: unit?.label ?? '',
-      tenantName: tenant?.full_name ?? '',
-      tenantPhone: tenant?.phone ?? '',
-    }
-  })
+  const page = (data ?? []).slice(0, PAGE_SIZE).map(mapJob)
+  const last = page[page.length - 1]
+  const hasMore = (data ?? []).length > PAGE_SIZE
+  return {
+    rows: page,
+    nextCursor: hasMore && last ? { createdAt: last.createdAt, id: last.id } : null,
+  }
 }
 
-function first(value) {
-  return Array.isArray(value) ? value[0] : value
+function mapJob(row) {
+  return {
+    id: row.id,
+    landlordId: row.landlord_id,
+    category: row.category,
+    description: row.description ?? '',
+    status: row.status,
+    urgent: row.is_urgent === true,
+    photoPath: row.photo_path ?? '',
+    createdAt: row.created_at,
+    unitLabel: row.unit_label ?? '',
+    tenantName: row.tenant_name ?? '',
+    tenantPhone: row.tenant_phone ?? '',
+  }
 }
 
 // The update matched nothing because the job was no longer assigned.

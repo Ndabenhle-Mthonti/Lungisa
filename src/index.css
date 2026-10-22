@@ -17,6 +17,16 @@ body {
   color: var(--color-text);
   background: var(--color-background);
   line-height: 1.4;
+  overflow-wrap: break-word;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--color-text);
+  outline-offset: 2px;
 }
 
 main {

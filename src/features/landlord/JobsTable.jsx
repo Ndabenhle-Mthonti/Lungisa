@@ -141,7 +141,7 @@ export default function JobsTable() {
           setAssignJob(null)
           setSuccess(
             mode === 'reassign'
-              ? 'Reassigned to ' + providerName + '.'
+              ? 'Changed to ' + providerName + '.'
               : unit
                 ? providerName + ' was assigned to ' + unit + '.'
                 : providerName + ' was assigned.',
@@ -228,17 +228,17 @@ function JobRow({ job, onAssign, onReassign }) {
         <span className="jobs-label">Action</span>
         {job.status === 'pending' ? (
           <Button variant="primary" size="md" aria-haspopup="dialog" onClick={() => onAssign(job)}>
-            Assign Provider
+            Assign provider
           </Button>
         ) : (
           <div className="jobs-actions">
             {job.status === 'assigned' && job.providerId ? (
               <Button variant="secondary" size="md" aria-haspopup="dialog" onClick={() => onReassign(job)}>
-                Reassign
+                Change provider
               </Button>
             ) : null}
             <Link className="button button-secondary button-md" to={'/landlord/jobs/' + job.id}>
-              View Details
+              View details
             </Link>
           </div>
         )}
@@ -254,7 +254,8 @@ function JobPhoto({ path, alt }) {
   const thumb = useJobThumbnail(path, { plain })
   const full = useSignedUrl('job-photos', fullOpen ? path : null)
 
-  if (!path || broken || thumb.isError) return <span className="jobs-photo-missing">No photo</span>
+  if (!path) return <span className="jobs-photo-missing">No photo was added</span>
+  if (broken || thumb.isError) return <span className="jobs-photo-missing">The photo could not be opened.</span>
   if (thumb.isPending || !thumb.data?.url) {
     return <span className="jobs-photo-skeleton" aria-hidden="true" />
   }

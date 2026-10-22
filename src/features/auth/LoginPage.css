@@ -58,6 +58,9 @@
 }
 
 .login-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--color-text);
   font-weight: 700;
 }

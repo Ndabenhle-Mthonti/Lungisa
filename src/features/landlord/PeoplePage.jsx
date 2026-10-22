@@ -114,7 +114,7 @@ function AddUnitForm({ properties }) {
         </label>
         <FormMessage message={message} />
         <Button type="submit" size="md" loading={add.isPending} disabled={properties.length === 0}>
-          Add unit
+          {message?.type === 'error' ? 'Retry' : 'Add unit'}
         </Button>
       </form>
     </section>
@@ -172,7 +172,7 @@ function InviteTenantForm({ units }) {
         </label>
         <FormMessage message={message} />
         <Button type="submit" size="md" loading={invite.isPending} disabled={units.length === 0}>
-          Send invite
+          {message?.type === 'error' ? 'Retry' : 'Send invite'}
         </Button>
       </form>
     </section>
@@ -199,7 +199,7 @@ function InviteProviderForm() {
 
   function submit(event) {
     event.preventDefault()
-    const problem = personProblem(fields) || (!trade ? 'Choose a trade.' : '')
+    const problem = personProblem(fields) || (!trade ? 'Choose the type of work.' : '')
     setMessage(problem ? { type: 'error', text: problem } : null)
     if (problem) return
     invite.mutate({
@@ -217,7 +217,7 @@ function InviteProviderForm() {
       <form className="people-form" onSubmit={submit}>
         <PersonFields fields={fields} onChange={setFields} />
         <label className="people-field">
-          Trade
+          Type of work
           <select value={trade} onChange={(event) => setTrade(event.target.value)}>
             {TRADES.map((item) => (
               <option key={item.value} value={item.value}>
@@ -228,7 +228,7 @@ function InviteProviderForm() {
         </label>
         <FormMessage message={message} />
         <Button type="submit" size="md" loading={invite.isPending}>
-          Send invite
+          {message?.type === 'error' ? 'Retry' : 'Send invite'}
         </Button>
       </form>
     </section>
@@ -269,8 +269,8 @@ function PersonList({ title, emptyTitle, emptyMessage, people, detail }) {
           {people.map((person) => (
             <li key={person.id}>
               <span className="people-name">{person.full_name}</span>
-              <span>{person.phone || 'No phone'}</span>
-              <span>{detail(person) || 'Not set'}</span>
+              <span>{person.phone || 'No phone number'}</span>
+              <span>{detail(person) || 'Not added yet'}</span>
             </li>
           ))}
         </ul>

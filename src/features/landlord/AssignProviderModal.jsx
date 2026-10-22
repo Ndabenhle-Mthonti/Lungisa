@@ -69,13 +69,13 @@ export default function AssignProviderModal({ job, mode = 'assign', onClose, onA
   }
 
   return (
-    <Modal open={Boolean(job)} title={reassigning ? 'Reassign job' : 'Assign Provider'} onClose={onClose}>
+    <Modal open={Boolean(job)} title={reassigning ? 'Change provider' : 'Assign provider'} onClose={onClose}>
       {job ? (
         <form className="assign-form" onSubmit={submit}>
           <dl className="assign-summary">
             <div>
               <dt>Flat / Unit</dt>
-              <dd>{job.unitLabel || 'Unknown unit'}</dd>
+              <dd>{job.unitLabel || 'No flat name'}</dd>
             </div>
             <div>
               <dt>Issue</dt>
@@ -90,7 +90,7 @@ export default function AssignProviderModal({ job, mode = 'assign', onClose, onA
           </dl>
 
           <label className="assign-field" htmlFor="assign-provider">
-            Select Provider
+            Provider
             <select
               id="assign-provider"
               value={providerId}
@@ -143,7 +143,7 @@ export default function AssignProviderModal({ job, mode = 'assign', onClose, onA
             loading={assign.isPending}
             disabled={providers.isPending || providers.isError || providerList.length === 0}
           >
-            {reassigning ? 'Reassign Now' : 'Assign Now'}
+            {error ? 'Retry' : reassigning ? 'Change provider' : 'Assign'}
           </Button>
         </form>
       ) : null}

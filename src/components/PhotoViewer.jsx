@@ -18,7 +18,7 @@ import Modal from './Modal.jsx'
   This component only displays them. It does not upload or compress.
 */
 
-export default function PhotoViewer({ src, thumbSrc, alt, onOpen, onThumbError, label }) {
+export default function PhotoViewer({ src, thumbSrc, alt, onOpen, onThumbError, label, closeSize = 'md' }) {
   const [open, setOpen] = useState(false)
   const thumb = thumbSrc || src
 
@@ -43,8 +43,8 @@ export default function PhotoViewer({ src, thumbSrc, alt, onOpen, onThumbError, 
           <img src={thumb} alt={alt} loading="lazy" onError={onThumbError} />
         </button>
       )}
-      <Modal open={open} title="Photo" onClose={closePhoto}>
-        <img className="photo-viewer-full" src={src} alt={alt} />
+      <Modal open={open} title="Photo" onClose={closePhoto} closeSize={closeSize}>
+        <img className="photo-viewer-full" src={src} alt={alt} loading="lazy" />
       </Modal>
     </>
   )

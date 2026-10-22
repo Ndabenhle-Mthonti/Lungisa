@@ -4,11 +4,30 @@ import { supabase } from '../../lib/supabaseClient.js'
 export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, role, full_name, phone, unit_id')
+    .select('id, role, full_name, phone, unit_id, privacy_accepted_at')
     .eq('id', userId)
     .maybeSingle()
 
   if (error) throw error
+  return data
+}
+
+// Records that this person has read the privacy notice. Only their own row can change.
+export async function acceptPrivacy() {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const userId = sessionData.session?.user?.id
+  if (!userId) throw new Error('Please sign in again.')
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ privacy_accepted_at: new Date().toISOString() })
+    .eq('id', userId)
+    .select('privacy_accepted_at')
+    .maybeSingle()
+
+  if (error || !data?.privacy_accepted_at) {
+    throw new Error('The notice could not be saved. Please try again.')
+  }
   return data
 }
 

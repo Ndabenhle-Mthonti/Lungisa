@@ -71,6 +71,188 @@ function blockedWrite(error, data) {
   return !data || data.length === 0
 }
 
+async function checkCountTablesHidden(landlord, tenant, provider) {
+  for (const person of [landlord, tenant, provider]) {
+    for (const table of ['landlord_job_counts', 'landlord_done_months']) {
+      const { data, error } = await person.client.from(table).select('*').limit(1)
+      record(
+        `${person.email} cannot read ${table}`,
+        Boolean(error) || (data ?? []).length === 0,
+        error?.message ?? `${(data ?? []).length} row(s)`,
+      )
+    }
+  }
+}
+
+async function checkLoadTestFunctionsHidden(tenant, landlord) {
+  const payload = [{
+    landlord_id: landlord.id,
+    unit_id: '00000000-0000-0000-0000-000000000000',
+    tenant_id: tenant.id,
+    provider_id: null,
+    category: 'plumbing',
+    description: 'LOAD-TEST security-check',
+    photo_path: 'seed/placeholder.jpg',
+    proof_photo_path: null,
+    status: 'pending',
+    is_urgent: false,
+    created_at: new Date().toISOString(),
+    assigned_at: null,
+    on_the_way_at: null,
+    completed_at: null,
+  }]
+
+  const insert = await tenant.client.rpc('insert_load_test_jobs', { payload })
+  const leftover = await landlord.client
+    .from('jobs')
+    .select('id')
+    .eq('description', 'LOAD-TEST security-check')
+  record(
+    'tenant cannot call insert_load_test_jobs',
+    Boolean(insert.error) && (leftover.data ?? []).length === 0,
+    insert.error?.message ?? 'call succeeded',
+  )
+
+  const remove = await tenant.client.rpc('delete_load_test_jobs', { batch_size: 1 })
+  record(
+    'tenant cannot call delete_load_test_jobs',
+    Boolean(remove.error),
+    remove.error?.message ?? `deleted ${remove.data}`,
+  )
+
+  const bump = await tenant.client.rpc('apply_landlord_job_count', {
+    p_landlord: landlord.id,
+    p_status: 'pending',
+    p_completed: null,
+    p_delta: 1,
+  })
+  record(
+    'tenant cannot call apply_landlord_job_count',
+    Boolean(bump.error),
+    bump.error?.message ?? 'call succeeded',
+  )
+}
+
+async function checkProviderOpenJobs(landlord, tenant, provider) {
+  const tenantList = await tenant.client.rpc('provider_open_jobs', {
+    cursor_created: null,
+    cursor_id: null,
+  })
+  record(
+    'tenant gets no rows from provider_open_jobs',
+    !tenantList.error && (tenantList.data ?? []).length === 0,
+    tenantList.error?.message ?? `${(tenantList.data ?? []).length} row(s)`,
+  )
+
+  const landlordList = await landlord.client.rpc('provider_open_jobs', {
+    cursor_created: null,
+    cursor_id: null,
+  })
+  record(
+    'landlord gets no rows from provider_open_jobs',
+    !landlordList.error && (landlordList.data ?? []).length === 0,
+    landlordList.error?.message ?? `${(landlordList.data ?? []).length} row(s)`,
+  )
+
+  const page = await provider.client.rpc('provider_open_jobs', {
+    cursor_created: null,
+    cursor_id: null,
+  })
+  const ids = (page.data ?? []).map((row) => row.id)
+  const owned = ids.length
+    ? await landlord.client.from('jobs').select('id, status, provider_id').in('id', ids)
+    : { data: [], error: null }
+  const rows = owned.data ?? []
+  const onlyHisOpen = !page.error
+    && !owned.error
+    && rows.length === ids.length
+    && rows.every((row) => row.provider_id === provider.id && row.status !== 'done')
+  record(
+    'provider_open_jobs returns only that provider’s open jobs',
+    onlyHisOpen,
+    page.error?.message ?? owned.error?.message ?? `${ids.length} ids, ${rows.length} owned`,
+  )
+}
+
+async function checkCannotChangeRole(tenant) {
+  const { data, error } = await tenant.client
+    .from('profiles')
+    .update({ role: 'landlord' })
+    .eq('id', tenant.id)
+    .select('id, role')
+  const stillTenant = await tenant.client.from('profiles').select('role').eq('id', tenant.id).single()
+  record(
+    'tenant cannot change his own role',
+    (data ?? []).length === 0 && stillTenant.data?.role === 'tenant',
+    error?.message ?? stillTenant.data?.role ?? 'role changed',
+  )
+}
+
+async function checkCannotChangeUrgent(landlord, tenant, job) {
+  if (!job) {
+    record('tenant cannot set urgent on his job', false, 'no job to try')
+    return
+  }
+  const before = await landlord.client.from('jobs').select('is_urgent').eq('id', job.id).single()
+  const { data, error } = await tenant.client
+    .from('jobs')
+    .update({ is_urgent: true })
+    .eq('id', job.id)
+    .select('id, is_urgent')
+  const after = await landlord.client.from('jobs').select('is_urgent').eq('id', job.id).single()
+  record(
+    'tenant cannot set urgent on his job',
+    (data ?? []).length === 0 && after.data?.is_urgent === before.data?.is_urgent,
+    error?.message ?? `is_urgent is ${after.data?.is_urgent}`,
+  )
+}
+
+async function checkPhotoUploadBlocked(tenant, landlordId) {
+  const text = new Blob(['not a photo'], { type: 'text/plain' })
+  const wrongType = await tenant.client.storage.from('job-photos').upload(
+    `${landlordId}/${crypto.randomUUID()}/report.jpg`,
+    text,
+    { contentType: 'text/plain', upsert: false },
+  )
+  record(
+    'tenant cannot upload a non-image as a report photo',
+    Boolean(wrongType.error),
+    wrongType.error?.message ?? wrongType.data?.path ?? 'upload succeeded',
+  )
+
+  const jpeg = new Blob([Uint8Array.from([0xff, 0xd8, 0xff, 0xd9])], { type: 'image/jpeg' })
+  const wrongFolder = await tenant.client.storage.from('job-photos').upload(
+    `00000000-0000-0000-0000-000000000000/${crypto.randomUUID()}/report.jpg`,
+    jpeg,
+    { contentType: 'image/jpeg', upsert: false },
+  )
+  record(
+    'tenant cannot upload a photo outside his landlord folder',
+    Boolean(wrongFolder.error),
+    wrongFolder.error?.message ?? wrongFolder.data?.path ?? 'upload succeeded',
+  )
+}
+
+async function checkOtherProviderPhoto(landlord, providerA, providerB) {
+  const { data, error } = await landlord.client
+    .from('jobs')
+    .select('photo_path')
+    .eq('provider_id', providerB.id)
+    .not('photo_path', 'is', null)
+    .limit(1)
+  const path = data?.[0]?.photo_path
+  if (error || !path) {
+    record('provider cannot open another provider’s photo', false, error?.message ?? 'no photo to try')
+    return
+  }
+  const signed = await providerA.client.storage.from('job-photos').createSignedUrl(path, 60)
+  record(
+    'provider cannot open another provider’s photo',
+    Boolean(signed.error) || !signed.data?.signedUrl,
+    signed.error?.message ?? 'signed URL returned',
+  )
+}
+
 async function main() {
   const landlord = await signIn(ACCOUNTS.landlord)
   const tenantA = await signIn(ACCOUNTS.tenantA)
@@ -115,7 +297,8 @@ async function main() {
   await checkOtherLandlord(providerB, 'Provider B')
 
   const doneJobs = jobs.filter((job) => job.status === 'done')
-  const tenantADone = doneJobs.find((job) => job.tenant_id === tenantA.id)
+  const tenantADone = await finishedJob(landlord, 'tenant_id', tenantA.id)
+    ?? doneJobs.find((job) => job.tenant_id === tenantA.id)
   const tenantBDone = doneJobs.find((job) => job.tenant_id === tenantB.id)
   const providerADone = doneJobs.find((job) => job.provider_id === providerA.id)
 
@@ -134,6 +317,14 @@ async function main() {
   await checkProviderCannotReassign(landlord, providerA, providerB, assignedToA)
   await checkTenantCannotReassign(landlord, tenantA, tenantAJob)
   await checkLandlordCanReassign(landlord, providerA, providerB, profiles, assignedJob)
+
+  await checkCountTablesHidden(landlord, tenantA, providerA)
+  await checkLoadTestFunctionsHidden(tenantA, landlord)
+  await checkProviderOpenJobs(landlord, tenantA, providerA)
+  await checkCannotChangeRole(tenantA)
+  await checkCannotChangeUrgent(landlord, tenantA, tenantAJob)
+  await checkPhotoUploadBlocked(tenantA, landlord.id)
+  await checkOtherProviderPhoto(landlord, providerA, providerB)
 
   const failed = results.filter((result) => !result.pass)
   console.log('')
@@ -435,7 +626,7 @@ async function checkTenantCanReopen(landlord, tenant, job) {
     record(name, false, 'the finished job was already changed')
     return
   }
-  const note = 'Still broken after the visit'
+  const note = 'Still broken after the visit ' + Date.now()
   const { data, error } = await tenant.client
     .from('jobs')
     .update({ status: 'assigned', reopen_note: note })
@@ -595,6 +786,37 @@ function sameJob(before, after) {
     after.reopen_count === before.reopen_count &&
     after.reopen_note === before.reopen_note
   )
+}
+
+// Prefer a finished job that already has a note, so a status-only update
+// has an old note to reuse. That is the case the trigger must reject.
+async function finishedJob(landlord, column, id) {
+  const withNote = await landlord.client
+    .from('jobs')
+    .select('id, tenant_id, provider_id, status, landlord_id')
+    .eq(column, id)
+    .eq('status', 'done')
+    .not('reopen_note', 'is', null)
+    .limit(1)
+    .maybeSingle()
+  if (withNote.error) {
+    console.error('Could not find a finished job: ' + withNote.error.message)
+    process.exit(1)
+  }
+  if (withNote.data) return withNote.data
+
+  const anyDone = await landlord.client
+    .from('jobs')
+    .select('id, tenant_id, provider_id, status, landlord_id')
+    .eq(column, id)
+    .eq('status', 'done')
+    .limit(1)
+    .maybeSingle()
+  if (anyDone.error) {
+    console.error('Could not find a finished job: ' + anyDone.error.message)
+    process.exit(1)
+  }
+  return anyDone.data
 }
 
 async function landlordJob(landlord, id) {

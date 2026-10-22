@@ -19,7 +19,7 @@ import Button from './Button.jsx'
   the DOM while React thinks it is closed.
 */
 
-export default function Modal({ open, title, onClose, children }) {
+export default function Modal({ open, title, onClose, closeSize = 'md', canClose = true, children }) {
   const dialogRef = useRef(null)
   const titleId = useId()
 
@@ -38,7 +38,7 @@ export default function Modal({ open, title, onClose, children }) {
   function handleCancel(event) {
     // Escape. preventDefault keeps the dialog open until React closes it.
     event.preventDefault()
-    onClose()
+    if (canClose) onClose()
   }
 
   return (
@@ -52,9 +52,11 @@ export default function Modal({ open, title, onClose, children }) {
         <h2 id={titleId} className="modal-title">
           {title}
         </h2>
-        <Button variant="secondary" size="md" onClick={onClose}>
-          Close
-        </Button>
+        {canClose ? (
+          <Button variant="secondary" size={closeSize} onClick={onClose}>
+            Close
+          </Button>
+        ) : null}
       </div>
       <div className="modal-body">{children}</div>
     </dialog>

@@ -31,6 +31,10 @@
   font-size: 1.125rem;
 }
 
+.request-detail .status-badge {
+  font-size: 1rem;
+}
+
 .request-error {
   display: flex;
   flex-direction: column;
@@ -52,7 +56,7 @@
 
 .request-reopened {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .request-reopen {

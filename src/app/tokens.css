@@ -15,7 +15,11 @@
 :root {
   --color-pending: #D93025;
   --color-in-progress: #F9AB00;
-  --color-done: #1E8E3E;
+  /*
+    #1E8E3E with white text is about 4.2:1. #188038 is the same green,
+    one step darker, so white-on-green and green-on-white both clear 4.5:1.
+  */
+  --color-done: #188038;
 
   --color-text: #202124;
   --color-background: #ffffff;

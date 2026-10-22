@@ -8,6 +8,9 @@
 }
 
 .landlord-brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   margin-right: auto;
   color: inherit;
   font-size: 1.25rem;
@@ -30,7 +33,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 var(--space-md);
   border: 1px solid transparent;
   border-radius: 8px;

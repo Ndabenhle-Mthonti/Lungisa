@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
+import EmptyState from '../../components/EmptyState.jsx'
 import Modal from '../../components/Modal.jsx'
 import PhotoViewer from '../../components/PhotoViewer.jsx'
 import RoleHeader from '../../components/RoleHeader.jsx'
@@ -48,7 +49,10 @@ export default function RequestPage() {
         ) : null}
 
         {request.isSuccess && !job ? (
-          <p>Request not found</p>
+          <EmptyState
+            title="This request is not on your list."
+            message="Go back home to see the requests that are yours."
+          />
         ) : null}
 
         {job ? (
@@ -57,7 +61,7 @@ export default function RequestPage() {
             <h2>{categoryLabel(job.category)}</h2>
             <StatusBadge status={job.status} label={tenantJobStatus(job.status)} />
             {job.reopen_count > 0 && job.status !== 'done' ? (
-              <p className="request-reopened">Reopened: not fixed</p>
+              <p className="request-reopened">Sent back because it was not fixed.</p>
             ) : null}
             {job.description ? <p>{job.description}</p> : null}
             <p>Reported: {formatReportedDate(job.created_at)}</p>
@@ -125,10 +129,10 @@ function NotFixed({ jobId, onSent }) {
       <Button variant="secondary" size="lg" onClick={() => setOpen(true)}>
         Not fixed
       </Button>
-      <Modal open={open} title="Not fixed" onClose={closeModal}>
+      <Modal open={open} title="Not fixed" onClose={closeModal} closeSize="lg">
         <form className="request-reopen" onSubmit={sendBack}>
           <label className="request-note">
-            Note
+            What is still wrong?
             <textarea
               value={note}
               onChange={(event) => {
@@ -142,7 +146,7 @@ function NotFixed({ jobId, onSent }) {
           </label>
           {reopen.isError ? <p role="alert">{reopen.error.message}</p> : null}
           <Button type="submit" size="lg" loading={reopen.isPending} disabled={!noteReady}>
-            Send back
+            {reopen.isError ? 'Retry' : 'Send back'}
           </Button>
         </form>
       </Modal>
@@ -154,7 +158,14 @@ function JobPhoto({ bucket, path, alt }) {
   const photo = useSignedUrl(bucket, path)
   if (photo.isPending) return <Spinner />
   if (photo.isError || !photo.data) {
-    return <p className="request-error-text">The photo could not be opened.</p>
+    return (
+      <div className="request-error">
+        <p className="request-error-text" role="alert">The photo could not be opened.</p>
+        <Button variant="secondary" size="lg" onClick={() => photo.refetch()}>
+          Retry
+        </Button>
+      </div>
+    )
   }
-  return <PhotoViewer src={photo.data} alt={alt} />
+  return <PhotoViewer src={photo.data} alt={alt} closeSize="lg" />
 }

@@ -82,8 +82,13 @@ export default function LoginPage() {
     if (profile.isError) {
       return (
         <main className="login-page">
-          <p className="login-error">Could not load your profile. Please try again.</p>
-          <LogOutButton />
+          <div className="login-form">
+            <p className="login-error" role="alert">Could not load your profile. Please try again.</p>
+            <Button variant="secondary" size="lg" onClick={() => profile.refetch()}>
+              Retry
+            </Button>
+            <LogOutButton size="lg" />
+          </div>
         </main>
       )
     }
@@ -112,7 +117,7 @@ export default function LoginPage() {
         </label>
         {formError ? <p className="login-error" role="alert">{formError}</p> : null}
         <Button type="submit" variant="primary" size="lg" loading={isSubmitting}>
-          Sign in
+          {formError ? 'Retry' : 'Sign in'}
         </Button>
         <Link className="login-link" to="/forgot-password">Forgot password?</Link>
       </form>

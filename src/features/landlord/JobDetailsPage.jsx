@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
+import EmptyState from '../../components/EmptyState.jsx'
 import PhotoViewer from '../../components/PhotoViewer.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import UrgentTag from '../../components/UrgentTag.jsx'
@@ -65,7 +66,12 @@ export default function JobDetailsPage() {
           </div>
         ) : null}
 
-        {jobQuery.isSuccess && !job ? <p>Job not found</p> : null}
+        {jobQuery.isSuccess && !job ? (
+          <EmptyState
+            title="This job is not on your list."
+            message="Go back to the dashboard to see your jobs."
+          />
+        ) : null}
 
         {job ? (
           <article className="job-details-body">
@@ -99,7 +105,7 @@ export default function JobDetailsPage() {
                   setAssignOpen(true)
                 }}
               >
-                Assign Provider
+                Assign provider
               </Button>
             ) : null}
             {job.status === 'assigned' && job.providerId ? (
@@ -112,7 +118,7 @@ export default function JobDetailsPage() {
                   setAssignOpen(true)
                 }}
               >
-                Reassign
+                Change provider
               </Button>
             ) : null}
 
@@ -165,7 +171,7 @@ export default function JobDetailsPage() {
             setAssignOpen(false)
             setSuccess(
               mode === 'reassign'
-                ? 'Reassigned to ' + providerName + '.'
+                ? 'Changed to ' + providerName + '.'
                 : unit
                   ? providerName + ' was assigned to ' + unit + '.'
                   : providerName + ' was assigned.',
@@ -184,11 +190,11 @@ function Person({ name, trade, phone }) {
     <dl>
       <div>
         <dt>Name</dt>
-        <dd>{name || 'Unknown'}</dd>
+        <dd>{name || 'Name missing'}</dd>
       </div>
       {trade ? (
         <div>
-          <dt>Trade</dt>
+          <dt>Type of work</dt>
           <dd>{trade}</dd>
         </div>
       ) : null}
@@ -208,9 +214,19 @@ function DetailPhoto({ bucket, path, alt }) {
   const [broken, setBroken] = useState(false)
   const photo = useSignedUrl(bucket, path)
 
-  if (!path || broken) return <p className="job-details-missing">No photo</p>
+  if (!path) return <p className="job-details-missing">No photo was added</p>
+  if (broken) return <p className="job-details-missing">The photo could not be opened.</p>
   if (photo.isPending) return <span className="job-details-photo-skeleton" aria-hidden="true" />
-  if (photo.isError || !photo.data) return <p className="job-details-missing">The photo could not be opened.</p>
+  if (photo.isError || !photo.data) {
+    return (
+      <div className="job-details-error">
+        <p role="alert">The photo could not be opened.</p>
+        <Button variant="secondary" size="md" onClick={() => photo.refetch()}>
+          Retry
+        </Button>
+      </div>
+    )
+  }
 
   return <PhotoViewer src={photo.data} alt={alt} onThumbError={() => setBroken(true)} />
 }

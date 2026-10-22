@@ -62,6 +62,10 @@
   margin-top: var(--space-xs);
 }
 
+.tenant-home .status-badge {
+  font-size: 1rem;
+}
+
 .tenant-home-error {
   display: flex;
   flex-direction: column;
@@ -91,5 +95,11 @@
 @keyframes tenant-skeleton {
   50% {
     opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenant-skeleton span {
+    animation: none;
   }
 }

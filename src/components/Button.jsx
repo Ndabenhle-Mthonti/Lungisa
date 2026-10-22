@@ -10,7 +10,7 @@ import Spinner from './Spinner.jsx'
     danger    — a destructive action, painted with the pending red
 
   size
-    md — 40px. Fine for a landlord sitting at a desk.
+    md — 44px. Fine for a landlord sitting at a desk.
     lg — 56px. Tenant buttons. A thumb must hit them easily.
     xl — 64px and full width. Provider buttons, used outdoors on a phone.
 

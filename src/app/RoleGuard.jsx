@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom'
 import Spinner from '../components/Spinner.jsx'
 import LogOutButton from '../features/auth/LogOutButton.jsx'
 import { useAuth } from '../features/auth/AuthProvider.jsx'
+import PrivacyNotice from '../features/auth/PrivacyNotice.jsx'
 import { useProfile } from '../features/auth/useProfile.js'
 import './RoleGuard.css'
 
@@ -57,5 +58,10 @@ export default function RoleGuard({ role, children }) {
     return <Navigate to={home} replace />
   }
 
-  return children
+  return (
+    <>
+      {children}
+      <PrivacyNotice role={profile.data.role} acceptedAt={profile.data.privacy_accepted_at} />
+    </>
+  )
 }

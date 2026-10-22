@@ -36,8 +36,8 @@ function InvalidResetLink() {
     <main className="login-page">
       <h1>Lungisa</h1>
       <div className="login-form">
-        <p className="login-note">This reset link is invalid or has expired.</p>
-        <Link className="login-link" to="/forgot-password">Request a new one</Link>
+        <p className="login-error" role="alert">This reset link is invalid or has expired.</p>
+        <Link className="button button-primary button-lg" to="/forgot-password">Request a new link</Link>
       </div>
     </main>
   )
@@ -102,7 +102,7 @@ export default function ResetPasswordPage() {
         </label>
         {formError ? <p className="login-error" role="alert">{formError}</p> : null}
         <Button type="submit" variant="primary" size="lg" loading={isSubmitting}>
-          Save new password
+          {formError ? 'Retry' : 'Save new password'}
         </Button>
       </form>
     </main>

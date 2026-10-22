@@ -99,10 +99,18 @@ function photoAlreadyStored(error) {
 
 // Newest first. The next page starts strictly before the last row's time,
 // and the id breaks a tie when two reports share a timestamp.
+// The tenant id has to be in the query. Row Level Security already hides other
+// people's jobs, but its rules are combined with OR, and without this filter
+// Postgres scans the whole table to find the first 20 rows.
 export async function fetchTenantRequests(cursor) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const tenantId = sessionData.session?.user?.id
+  if (!tenantId) throw new Error('Please sign in again.')
+
   let query = supabase
     .from('jobs')
     .select('id, category, description, status, created_at')
+    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(PAGE_SIZE)

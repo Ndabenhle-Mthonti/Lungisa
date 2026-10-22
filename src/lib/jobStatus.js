@@ -17,7 +17,7 @@ export function tenantJobStatus(status) {
   if (status === 'assigned') return 'In Progress'
   if (status === 'on_the_way') return 'Provider is on the way'
   if (status === 'done') return 'Done'
-  return 'Unknown'
+  return 'Status missing'
 }
 
 // "Oct 4". The year is left off so the line stays short on a phone.

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Button from '../../components/Button.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import PhotoViewer from '../../components/PhotoViewer.jsx'
@@ -18,17 +18,19 @@ export default function ProviderPage() {
   const { session } = useAuth()
   useJobsRealtime('provider_id', session?.user?.id)
   const [doneNotice, setDoneNotice] = useState('')
-  const jobsQuery = useQuery({
+  const jobsQuery = useInfiniteQuery({
     queryKey: ['provider-jobs', session?.user?.id],
     enabled: Boolean(session?.user?.id),
-    queryFn: fetchProviderJobs,
+    initialPageParam: null,
+    queryFn: ({ pageParam }) => fetchProviderJobs(pageParam),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   })
-  const jobs = jobsQuery.data ?? []
+  const jobs = jobsQuery.data?.pages.flatMap((page) => page.rows) ?? []
   const pullLabel = usePullToRefresh(() => jobsQuery.refetch())
 
   return (
     <>
-      <RoleHeader title="My Jobs Today" />
+      <RoleHeader title="My Jobs Today" logoutSize="xl" />
       <main className="provider-jobs" aria-busy={jobsQuery.isPending}>
         {pullLabel ? (
           <p className="pull-refresh" role="status">
@@ -38,7 +40,7 @@ export default function ProviderPage() {
         <Button
           variant="secondary"
           size="xl"
-          loading={jobsQuery.isFetching}
+          loading={jobsQuery.isFetching && !jobsQuery.isFetchingNextPage}
           onClick={() => jobsQuery.refetch()}
         >
           Refresh
@@ -57,19 +59,49 @@ export default function ProviderPage() {
           </>
         ) : null}
 
-        {jobsQuery.isError ? (
-          <p className="provider-jobs-error" role="alert">
-            Jobs could not be loaded. Please try again.
-          </p>
+        {jobsQuery.isError && jobs.length === 0 ? (
+          <div>
+            <p className="provider-jobs-error" role="alert">
+              Jobs could not be loaded. Please try again.
+            </p>
+            <Button variant="secondary" size="xl" onClick={() => jobsQuery.refetch()}>
+              Retry
+            </Button>
+          </div>
         ) : null}
 
         {!jobsQuery.isPending && !jobsQuery.isError && jobs.length === 0 ? (
-          <EmptyState title="No jobs assigned to you today." />
+          <EmptyState
+            title="No jobs assigned to you today."
+            message="When a landlord assigns you a job, it will show up here."
+          />
         ) : null}
 
         {jobs.map((job) => (
           <JobCard key={job.id} job={job} onDone={setDoneNotice} />
         ))}
+
+        {jobsQuery.hasNextPage ? (
+          <Button
+            variant="secondary"
+            size="xl"
+            loading={jobsQuery.isFetchingNextPage}
+            onClick={() => jobsQuery.fetchNextPage()}
+          >
+            Load more
+          </Button>
+        ) : null}
+
+        {jobsQuery.isError && jobs.length > 0 ? (
+          <div>
+            <p className="provider-jobs-error" role="alert">
+              More jobs could not be loaded. Please try again.
+            </p>
+            <Button variant="secondary" size="xl" onClick={() => jobsQuery.fetchNextPage()}>
+              Retry
+            </Button>
+          </div>
+        ) : null}
       </main>
     </>
   )
@@ -78,7 +110,7 @@ export default function ProviderPage() {
 function JobCard({ job, onDone }) {
   const queryClient = useQueryClient()
   const category = categoryLabel(job.category)
-  const place = job.unitLabel || 'Unknown flat'
+  const place = job.unitLabel || 'Flat name missing'
   const phoneHref = job.tenantPhone ? 'tel:' + job.tenantPhone.replace(/\s/g, '') : ''
   const start = useMutation({
     mutationFn: markOnTheWay,
@@ -96,14 +128,14 @@ function JobCard({ job, onDone }) {
         <span>{place + ' - ' + category}</span>
         {job.urgent ? <UrgentTag /> : null}
       </h2>
-      <p className="provider-job-tenant">{job.tenantName || 'Unknown tenant'}</p>
+      <p className="provider-job-tenant">{job.tenantName || 'Tenant name missing'}</p>
       {job.tenantPhone ? <p className="provider-job-phone">{job.tenantPhone}</p> : null}
       {phoneHref ? (
         <a className="button button-primary button-xl" href={phoneHref}>
           Call
         </a>
       ) : null}
-      <p className="provider-job-issue">Issue: {job.description || 'No description'}</p>
+      <p className="provider-job-issue">Issue: {job.description || 'No details were added'}</p>
       <ViewPhoto path={job.photoPath} alt={'Problem at ' + place} />
       <StatusBadge status={job.status} />
       {job.status === 'assigned' ? (
@@ -113,7 +145,7 @@ function JobCard({ job, onDone }) {
           loading={start.isPending}
           onClick={() => start.mutate({ jobId: job.id })}
         >
-          I AM ON MY WAY
+          {start.isError ? 'Retry' : 'I am on my way'}
         </Button>
       ) : null}
       {job.status === 'on_the_way' ? (
@@ -167,7 +199,7 @@ function ProofSection({ job, place, onDone }) {
 
   return (
     <div className="provider-proof">
-      {previewUrl ? <img src={previewUrl} alt="Preview of the finished work" /> : null}
+      {previewUrl ? <img src={previewUrl} alt="Preview of the finished work" loading="lazy" /> : null}
       <Button
         type="button"
         variant={photo ? 'secondary' : 'primary'}
@@ -175,7 +207,7 @@ function ProofSection({ job, place, onDone }) {
         disabled={finish.isPending}
         onClick={openCamera}
       >
-        {photo ? 'Retake' : 'MARK AS DONE + UPLOAD PROOF PHOTO'}
+        {photo ? 'Retake photo' : 'Add a proof photo'}
       </Button>
       <input
         ref={fileRef}
@@ -183,6 +215,7 @@ function ProofSection({ job, place, onDone }) {
         type="file"
         accept="image/*"
         capture="environment"
+        aria-label="Photo of the finished work"
         onChange={choosePhoto}
       />
       <Button
@@ -192,7 +225,7 @@ function ProofSection({ job, place, onDone }) {
         disabled={!photo}
         onClick={() => finish.mutate({ jobId: job.id, landlordId: job.landlordId, photo })}
       >
-        {finish.isError ? 'Retry' : 'Confirm: Job Done'}
+        {finish.isError ? 'Retry' : 'Mark as done'}
       </Button>
       {finish.isError ? (
         <p className="provider-jobs-error" role="alert">
@@ -206,23 +239,28 @@ function ProofSection({ job, place, onDone }) {
 function ViewPhoto({ path, alt }) {
   const photo = useSignedUrl('job-photos', path)
 
-  if (!path) return <p className="provider-job-missing">No photo</p>
+  if (!path) return <p className="provider-job-missing">No photo was added</p>
   if (photo.isPending) {
     return (
       <Button variant="secondary" size="xl" loading>
-        VIEW PHOTO
+        View photo
       </Button>
     )
   }
   if (photo.isError || !photo.data) {
     return (
-      <p className="provider-job-missing" role="alert">
-        The photo could not be opened.
-      </p>
+      <div className="provider-photo-error">
+        <p className="provider-job-missing" role="alert">
+          The photo could not be opened.
+        </p>
+        <Button variant="secondary" size="xl" onClick={() => photo.refetch()}>
+          Retry
+        </Button>
+      </div>
     )
   }
 
-  return <PhotoViewer src={photo.data} alt={alt} label="VIEW PHOTO" />
+  return <PhotoViewer src={photo.data} alt={alt} label="View photo" closeSize="xl" />
 }
 
 function JobsSkeleton() {

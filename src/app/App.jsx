@@ -13,8 +13,6 @@ const RequestPage = lazy(() => import('../features/tenant/RequestPage.jsx'))
 const ProviderPage = lazy(() => import('../features/provider/ProviderPage.jsx'))
 const ForgotPasswordPage = lazy(() => import('../features/auth/ForgotPasswordPage.jsx'))
 const ResetPasswordPage = lazy(() => import('../features/auth/ResetPasswordPage.jsx'))
-// Temporary preview. Delete this route and DevComponentsPage.jsx later.
-const DevComponentsPage = lazy(() => import('./DevComponentsPage.jsx'))
 
 export default function App() {
   return (
@@ -81,7 +79,6 @@ export default function App() {
               </RoleGuard>
             }
           />
-          <Route path="/dev/components" element={<DevComponentsPage />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

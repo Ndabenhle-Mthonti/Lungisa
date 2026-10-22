@@ -351,7 +351,6 @@ async function createJobs(landlordId, tenants, providers) {
 function printSummary(counts) {
   console.log('')
   console.log('Seed finished.')
-  console.log('Dev password for every account: ' + PASSWORD)
   console.log('Landlord: ' + LANDLORD.fullName + '  ' + LANDLORD.email)
   for (const tenant of TENANTS) {
     console.log('Tenant:   ' + tenant.fullName + '  ' + tenant.email + '  ' + tenant.unit)
@@ -377,7 +376,6 @@ function printSummary(counts) {
 }
 
 async function main() {
-  console.log('Dev password for every account: ' + PASSWORD)
   await clearOldSeed()
   const { landlordId, tenants, providers } = await createAccounts()
   const counts = await createJobs(landlordId, tenants, providers)

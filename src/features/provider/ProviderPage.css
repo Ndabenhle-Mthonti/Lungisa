@@ -79,9 +79,28 @@
   gap: var(--space-md);
 }
 
+.provider-photo-error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
 .provider-skeleton span {
   display: block;
   height: 16rem;
   border-radius: 8px;
   background: var(--color-border);
+  animation: provider-skeleton 1.2s ease-in-out infinite;
+}
+
+@keyframes provider-skeleton {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .provider-skeleton span {
+    animation: none;
+  }
 }

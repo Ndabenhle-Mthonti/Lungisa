@@ -134,6 +134,12 @@
   width: 100%;
 }
 
+.report-error-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
 .report-error {
   margin: 0;
   color: var(--color-pending);

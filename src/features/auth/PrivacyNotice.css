@@ -1,0 +1,55 @@
+.app-footer {
+  padding: 0 var(--space-lg) var(--space-lg);
+  text-align: center;
+}
+
+.app-footer-privacy {
+  min-height: 44px;
+  padding: 0 var(--space-md);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.app-footer-tenant .app-footer-privacy {
+  min-height: 56px;
+  font-size: 1rem;
+}
+
+.app-footer-provider .app-footer-privacy {
+  min-height: 64px;
+  font-size: 1.125rem;
+}
+
+.privacy-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.privacy-copy p {
+  margin: 0;
+}
+
+.privacy-copy a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.privacy-error {
+  margin: var(--space-md) 0 0;
+  color: var(--color-pending);
+  font-weight: 700;
+}
+
+.privacy-copy + .button,
+.privacy-error + .button {
+  width: 100%;
+  margin-top: var(--space-md);
+}

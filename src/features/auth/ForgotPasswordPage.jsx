@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
           loading={isSubmitting}
           disabled={cooldown > 0}
         >
-          {cooldown > 0 ? `Send again in ${cooldown}s` : 'Send reset link'}
+          {formError ? 'Retry' : cooldown > 0 ? `Send again in ${cooldown}s` : 'Send reset link'}
         </Button>
         <Link className="login-link" to="/login">Back to sign in</Link>
       </form>

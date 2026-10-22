@@ -1,4 +1,3 @@
-import imageCompression from 'browser-image-compression'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabaseClient.js'
 
@@ -17,6 +16,8 @@ export async function compressPhoto(file) {
   }
 
   try {
+    // Loaded only when a photo is sent, so the job lists stay small.
+    const { default: imageCompression } = await import('browser-image-compression')
     const compressed = await imageCompression(file, {
       maxWidthOrHeight: 1280,
       initialQuality: 0.7,

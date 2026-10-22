@@ -3,7 +3,7 @@ import Button from '../../components/Button.jsx'
 import { useAuth } from './AuthProvider.jsx'
 
 // Drop this into a role header. It clears the session on this device only.
-export default function LogOutButton() {
+export default function LogOutButton({ size = 'md' }) {
   const { signOut } = useAuth()
   const [loading, setLoading] = useState(false)
 
@@ -17,7 +17,7 @@ export default function LogOutButton() {
   }
 
   return (
-    <Button variant="secondary" size="md" loading={loading} onClick={handleClick}>
+    <Button variant="secondary" size={size} loading={loading} onClick={handleClick}>
       Log out
     </Button>
   )
