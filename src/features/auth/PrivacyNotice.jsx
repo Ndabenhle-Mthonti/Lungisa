@@ -45,7 +45,7 @@ export default function PrivacyNotice({ role, acceptedAt }) {
           <p>Your landlord can see them. The provider assigned to your job can see that job.</p>
           <p>
             For a question, or to ask for your information to be deleted, email{' '}
-            <a href="mailto:privacy@example.com">privacy@example.com</a>.
+            <a href="mailto:ndabenhleq361@gmail.com">ndabenhleq361@gmail.com</a>.
           </p>
         </div>
         {accepted ? null : (
