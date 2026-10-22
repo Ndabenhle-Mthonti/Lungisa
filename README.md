@@ -1,42 +1,81 @@
 # Lungisa
 
-Lungisa is a property maintenance app. A tenant reports a problem with a photo, the landlord assigns a provider, and the provider marks the job on the way and then done with a proof photo. Each person signs in with email and password and only sees their own rows. Postgres Row Level Security enforces that.
+Lungisa is a property maintenance app for a landlord, the tenants in those flats, and the tradespeople who fix the problems. A tenant reports a leak or a dead plug with a photo. The landlord assigns the matching trade. The provider says they are on the way, then finishes the job with a proof photo. The tenant sees each step on their phone.
+
+Maintenance requests usually get lost in calls and WhatsApp. Lungisa keeps one job, with a status, a photo of the problem, and a photo of the finished work.
+
+Nobody signs themselves up. The landlord invites each tenant to a flat and each provider to a trade. After sign-in, a person lands on their own screen. Postgres Row Level Security is what keeps one tenant from reading another tenant's jobs. The screens only follow that rule.
 
 The product spec is in [docs/PDR.md](docs/PDR.md).
 
-## Run it locally
+## What each person can do
 
-Requirements: Node.js 20 or newer, npm, and a Supabase project.
+**Tenant.** Report a problem at their own flat. They choose Plumbing, Electrical, Lock, Appliance, or Other, describe it, and add a photo. Send stays off until the photo is there. Their home list then shows Pending, In Progress, a line such as **Plumber on the way**, or Done. On a finished job they can open the proof photo, or send it back with **Not fixed** and a short note.
 
-1. Install dependencies.
+**Landlord.** See how many jobs are new, in progress, and done this month. The jobs list shows the flat, the issue, the tenant's phone, the photo, and the status. A plumbing job offers **Assign to plumber**. An electrical job offers **Assign to electrician**. The same wording is used for a locksmith, appliance repair, and a general provider. Once the provider has started, the status reads **Plumber on the way** (or the matching trade). The landlord can change the provider until that person is on the way, and can open the full job with its timeline and both photos. On People they add flats, invite a tenant or a provider, and edit or remove a name, phone, and email. Removing a tenant frees that flat for the next person. Past jobs stay on the dashboard.
+
+**Provider.** See only the jobs assigned to them and not yet done. Each card has the flat, the tenant's phone, a Call button, the issue, and the problem photo. **I am on my way** tells the tenant they have started. **Mark as done** needs a photo of the finished work. The job then leaves their list.
+
+Photos are turned into a JPEG in the browser before upload, including pictures from an iPhone. Status changes show up on the other screens without a refresh. Pull down, or use **Refresh**, if the signal is poor.
+
+## Try it
+
+The live app is [https://lungisa-nine.vercel.app](https://lungisa-nine.vercel.app). It has no public sign-up, and the demo accounts below are not on that site. To click through landlord, tenant, and provider, run the app on your own computer against a free [Supabase](https://supabase.com) project and load the demo.
+
+You need Node.js 20 or newer, npm, and a Supabase project. Use three browser windows, or one normal window and two private windows, so the three people can stay signed in at the same time.
+
+1. Install and configure.
 
    ```bash
    npm install
-   ```
-
-2. Copy the environment file and fill in the two public values from the Supabase project settings (Project URL and the anon key). Leave the service role key only if you will run the local seed script.
-
-   ```bash
    copy .env.example .env.local
    ```
 
    On macOS or Linux, use `cp .env.example .env.local`.
 
-3. Apply the SQL migrations. See [Migrations](#migrations).
+   In the Supabase dashboard, open **Project Settings → API**. Put the project URL in `VITE_SUPABASE_URL` and the anon public key in `VITE_SUPABASE_ANON_KEY`. Put the service role key in `SEED_SERVICE_ROLE_KEY`. That last key is only for the demo script. Do not commit `.env.local`, and do not put the service role key on Vercel.
 
-4. Optional: load demo people and jobs on the development project.
+2. In the Supabase **SQL Editor**, run every file in `supabase/migrations` once, in the order in [Migrations](#migrations). Paste one file, run it, then the next. Do not skip one.
+
+3. Load the demo building, people, and jobs.
 
    ```bash
    node --env-file=.env.local scripts/seed.mjs
    ```
 
-5. Start the app. Vite prints a local URL, usually `http://localhost:5173`.
+4. Start the app and open the address Vite prints, usually `http://localhost:5173`.
 
    ```bash
    npm run dev
    ```
 
-`.env.local` is gitignored. Do not commit real keys.
+5. Sign in with the password `LungisaDev123`.
+
+   | Window | Role | Email | What opens |
+   | --- | --- | --- | --- |
+   | 1 | Tenant, Lerato, Flat 1A | `lerato@seed.lungisa.test` | Home |
+   | 2 | Landlord, Thandi | `thandi@seed.lungisa.test` | Dashboard |
+   | 3 | Provider, Sipho, plumber | `sipho@seed.lungisa.test` | My Jobs Today |
+
+6. Walk through one job.
+
+   - As Lerato, choose **+ Report New Problem**. Pick Plumbing, describe it, add any photo, and choose **Send to Landlord**.
+   - As Thandi, find that row. The action says **Assign to plumber**. Choose Sipho and assign him.
+   - As Sipho, open the new card and choose **I am on my way**. Lerato's list changes to **Plumber on the way**.
+   - As Sipho, add a photo of the finished work and choose **Mark as done**. Lerato sees Done and the proof photo. Thandi's Done count goes up.
+
+The seed also creates Nokuthula (`nokuthula@seed.lungisa.test`, Flat 4B), Andile (`andile@seed.lungisa.test`, Flat 7C), Themba the electrician (`themba@seed.lungisa.test`), and Jabu the locksmith (`jabu@seed.lungisa.test`). Same password.
+
+Inviting a new person, and editing or removing someone, also needs the Edge Functions deployed on that Supabase project:
+
+```bash
+supabase functions deploy invite-user
+supabase functions deploy manage-person
+```
+
+The report, assign, on-the-way, and done loop above works without those two functions.
+
+Do not run `scripts/seed.mjs` or `scripts/seed-load.mjs` against the live site's database. `seed-load.mjs` inserts 100,000 fake jobs.
 
 ## Environment variables
 
@@ -44,11 +83,11 @@ Names only. Do not put the values in this file or in git.
 
 | Name | Where it is set |
 | --- | --- |
-| `VITE_SUPABASE_URL` | `.env.local` for local development. Vercel project settings for production. This is the only Supabase URL the production build reads. |
+| `VITE_SUPABASE_URL` | `.env.local` for local development. Vercel project settings for a deploy. The production build reads this URL and no other. |
 | `VITE_SUPABASE_ANON_KEY` | `.env.local` and Vercel. Public anon key. Safe in the browser. |
 | `SEED_SERVICE_ROLE_KEY` | `.env.local` only, for `scripts/seed.mjs`, `scripts/seed-load.mjs`, and `scripts/clearload.mjs`. Never set this on Vercel and never prefix it with `VITE_`. |
 
-The invite Edge Function reads `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` from its own secrets. Those stay on Supabase, not in the React app.
+`invite-user` and `manage-person` read `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` from their own secrets. Those stay on Supabase, not in the React app.
 
 ## Migrations
 
@@ -73,8 +112,9 @@ Run every file in `supabase/migrations` once, in this order, on a new project. T
 17. `0017_provider_open_jobs.sql`
 18. `0018_reopen_note.sql`
 19. `0019_privacy_notice.sql`
+20. `0020_people.sql`
 
-Do not run `scripts/seed-load.mjs` against a production project. It inserts 100,000 fake jobs.
+`0020_people.sql` is safe to run again. It lets a landlord edit or remove a tenant or a provider.
 
 ## Security check
 
@@ -86,26 +126,12 @@ npm run security:check
 
 The script signs in with the anon key and checks that blocked reads and writes stay blocked. It does not read the service role key. A passing run reopens one finished job and reassigns one assigned job, so the dashboard counts will move.
 
-## Demo accounts
-
-These exist only after `scripts/seed.mjs` has run on that project. Every password is `LungisaDev123`.
-
-| Role | Person | Email |
-| --- | --- | --- |
-| Landlord | Thandi | `thandi@seed.lungisa.test` |
-| Tenant | Lerato, Flat 1A | `lerato@seed.lungisa.test` |
-| Provider | Sipho, plumber | `sipho@seed.lungisa.test` |
-
-The seed also creates tenants Nokuthula (`nokuthula@seed.lungisa.test`, Flat 4B) and Andile (`andile@seed.lungisa.test`, Flat 7C), and providers Themba (`themba@seed.lungisa.test`, electrician) and Jabu (`jabu@seed.lungisa.test`, locksmith).
-
-Do not load these accounts into the production project.
-
 ## Host
 
-`vercel.json` sends every path to `index.html` so React Router routes such as `/tenant` and `/landlord/people` load the app. It also sets:
+`vercel.json` sends every path to `index.html` so routes such as `/tenant` and `/landlord/people` load the app. It also sets:
 
-- `Content-Security-Policy`, so the browser may talk only to this site and to `https://YOUR_PROJECT_REF.supabase.co` (API, realtime, and photo storage). Photo previews use `blob:` on this site.
+- `Content-Security-Policy`, so the browser may talk only to this site and to the Supabase project named there (API, realtime, and photo storage). Photo previews use `blob:` on this site.
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: strict-origin-when-cross-origin`
 
-Before the first production deploy, replace `YOUR_PROJECT_REF` in `vercel.json` with the new Supabase project ref. The ref is the subdomain of the project URL.
+The policy host must be the same Supabase project as `VITE_SUPABASE_URL`. A deploy to a different project has to change both.

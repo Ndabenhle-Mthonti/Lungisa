@@ -74,8 +74,8 @@ Deno.serve(async (request) => {
       p_person: person.id,
     })
     if (removeError) {
-      console.error('Remove failed', removeError.code)
-      return json(500, { error: 'This person could not be removed. Please try again.' })
+      console.error('Remove failed', removeError.code, removeError.message)
+      return json(500, { error: removeFailureMessage(removeError.message) })
     }
     return json(200, { id: person.id })
   }
@@ -211,6 +211,17 @@ function requiredText(
   const trimmed = value.trim()
   if (!trimmed) return { ok: false, error: message }
   return { ok: true, value: trimmed }
+}
+
+function removeFailureMessage(message: string | undefined) {
+  const text = (message ?? '').toLowerCase()
+  if (text.includes('could not find the function') || text.includes('schema cache')) {
+    return 'The database update has not been applied yet. Run it, then try again.'
+  }
+  if (text.includes('operator does not exist')) {
+    return 'The database update needs to be run again, then try Remove.'
+  }
+  return 'This person could not be removed. Please try again.'
 }
 
 function emailStatus(error: { message?: string, code?: string, status?: number }) {

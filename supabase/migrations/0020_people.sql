@@ -397,6 +397,7 @@ begin
 
   perform set_config('lungisa.removing_person', '1', true);
 
+  -- Unfinished work goes back to the landlord. Finished jobs keep their history.
   update jobs
   set status = 'pending',
       provider_id = null,
@@ -405,6 +406,20 @@ begin
   where provider_id = p_person
     and status in ('assigned', 'on_the_way');
 
+  update jobs
+  set provider_id = null
+  where provider_id = p_person;
+
+  update jobs
+  set tenant_id = null
+  where tenant_id = p_person;
+
+  update job_events
+  set actor_id = null
+  where actor_id = p_person;
+
+  -- Photos stay. The owner column is a uuid, and owner_id is text.
+  -- Comparing those without a cast aborts the removal.
   if exists (
     select 1
     from information_schema.columns
@@ -424,7 +439,7 @@ begin
       and column_name = 'owner_id'
   ) then
     execute 'update storage.objects set owner_id = null where owner_id = $1'
-      using p_person;
+      using p_person::text;
   end if;
 
   delete from auth.users where id = p_person;
