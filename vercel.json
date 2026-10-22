@@ -5,7 +5,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' blob: https://YOUR_PROJECT_REF.supabase.co; worker-src 'self' blob:; connect-src 'self' https://YOUR_PROJECT_REF.supabase.co wss://YOUR_PROJECT_REF.supabase.co"
+          "value": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' blob: https://auxquncxxqvervzaovom.supabase.co; worker-src 'self' blob:; connect-src 'self' https://auxquncxxqvervzaovom.supabase.co wss://auxquncxxqvervzaovom.supabase.co"
         },
         {
           "key": "X-Content-Type-Options",
