@@ -51,6 +51,7 @@ export default function ResetPasswordPage() {
   const profile = useProfile()
   const [arrival] = useState(readResetLink)
   const [passwordSaved, setPasswordSaved] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [formError, setFormError] = useState('')
   const {
     register,
@@ -112,13 +113,29 @@ export default function ResetPasswordPage() {
       <form className="login-form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <label className="login-field">
           New password
-          <input type="password" autoComplete="new-password" {...register('password')} />
+          <input
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            {...register('password')}
+          />
           {errors.password ? <span className="login-error">{errors.password.message}</span> : null}
         </label>
         <label className="login-field">
           Confirm password
-          <input type="password" autoComplete="new-password" {...register('confirm')} />
+          <input
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            {...register('confirm')}
+          />
           {errors.confirm ? <span className="login-error">{errors.confirm.message}</span> : null}
+        </label>
+        <label className="login-show-password">
+          <input
+            type="checkbox"
+            checked={showPassword}
+            onChange={(event) => setShowPassword(event.target.checked)}
+          />
+          Show password
         </label>
         {formError ? <p className="login-error" role="alert">{formError}</p> : null}
         <Button type="submit" variant="primary" size="lg" loading={isSubmitting}>

@@ -41,6 +41,22 @@
   width: 100%;
 }
 
+.login-show-password {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: 44px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.login-show-password input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--color-text);
+}
+
 .login-error {
   margin: 0;
   color: var(--color-pending);
