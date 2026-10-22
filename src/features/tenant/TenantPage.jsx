@@ -72,7 +72,7 @@ export default function TenantPage() {
                     <span className="tenant-request-issue">{job.description}</span>
                   ) : null}
                   <span className="tenant-request-meta">
-                    <StatusBadge status={job.status} label={tenantJobStatus(job.status)} />
+                    <StatusBadge status={job.status} label={tenantJobStatus(job.status, job.category)} />
                     <span>Reported: {formatReportedDate(job.created_at)}</span>
                   </span>
                 </button>

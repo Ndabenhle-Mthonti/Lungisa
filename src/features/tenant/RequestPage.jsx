@@ -59,7 +59,7 @@ export default function RequestPage() {
           <article className="request-detail">
             {sentBack ? <p className="request-sent-back">We sent it back to your provider.</p> : null}
             <h2>{categoryLabel(job.category)}</h2>
-            <StatusBadge status={job.status} label={tenantJobStatus(job.status)} />
+            <StatusBadge status={job.status} label={tenantJobStatus(job.status, job.category)} />
             {job.reopen_count > 0 && job.status !== 'done' ? (
               <p className="request-reopened">Sent back because it was not fixed.</p>
             ) : null}

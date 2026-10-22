@@ -6,7 +6,7 @@ import PhotoViewer from '../../components/PhotoViewer.jsx'
 import RoleHeader from '../../components/RoleHeader.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import UrgentTag from '../../components/UrgentTag.jsx'
-import { categoryLabel } from '../../lib/jobStatus.js'
+import { categoryLabel, onTheWayLabel } from '../../lib/jobStatus.js'
 import { readChosenPhoto, useSignedUrl } from '../../lib/photos.js'
 import { useJobsRealtime } from '../../lib/useJobsRealtime.js'
 import { usePullToRefresh } from '../../lib/usePullToRefresh.js'
@@ -137,7 +137,10 @@ function JobCard({ job, onDone }) {
       ) : null}
       <p className="provider-job-issue">Issue: {job.description || 'No details were added'}</p>
       <ViewPhoto path={job.photoPath} alt={'Problem at ' + place} />
-      <StatusBadge status={job.status} />
+      <StatusBadge
+        status={job.status}
+        label={job.status === 'on_the_way' ? onTheWayLabel(job.category) : undefined}
+      />
       {job.status === 'assigned' ? (
         <Button
           variant="primary"

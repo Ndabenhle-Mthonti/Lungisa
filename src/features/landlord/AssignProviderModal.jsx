@@ -3,7 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Button from '../../components/Button.jsx'
 import Modal from '../../components/Modal.jsx'
 import UrgentTag from '../../components/UrgentTag.jsx'
-import { categoryLabel } from '../../lib/jobStatus.js'
+import {
+  assignActionLabel,
+  categoryLabel,
+  changeWorkerLabel,
+  tradeForCategory,
+  workerName,
+  workerTitle,
+} from '../../lib/jobStatus.js'
 import {
   AlreadyAssignedError,
   JobChangedError,
@@ -29,9 +36,11 @@ export default function AssignProviderModal({ job, mode = 'assign', onClose, onA
     setError('')
   }, [job?.id, mode])
 
-  const providerList = (providers.data ?? []).filter(
-    (person) => mode !== 'reassign' || person.id !== job?.providerId,
-  )
+  const wantedTrade = tradeForCategory(job?.category)
+  const providerList = (providers.data ?? [])
+    .filter((person) => mode !== 'reassign' || person.id !== job?.providerId)
+    .slice()
+    .sort((a, b) => Number(a.trade !== wantedTrade) - Number(b.trade !== wantedTrade))
   const reassigning = mode === 'reassign'
 
   const assign = useMutation({
@@ -54,7 +63,7 @@ export default function AssignProviderModal({ job, mode = 'assign', onClose, onA
     if (assign.isPending || !job) return
     setError('')
     if (!providerId) {
-      setError('Choose a provider.')
+      setError('Choose ' + articleFor(workerName(job.category)) + ' ' + workerName(job.category) + '.')
       return
     }
     const provider = providerList.find((person) => person.id === providerId)
@@ -69,7 +78,11 @@ export default function AssignProviderModal({ job, mode = 'assign', onClose, onA
   }
 
   return (
-    <Modal open={Boolean(job)} title={reassigning ? 'Change provider' : 'Assign provider'} onClose={onClose}>
+    <Modal
+      open={Boolean(job)}
+      title={job ? (reassigning ? changeWorkerLabel(job.category) : assignActionLabel(job.category)) : 'Assign'}
+      onClose={onClose}
+    >
       {job ? (
         <form className="assign-form" onSubmit={submit}>
           <dl className="assign-summary">
@@ -90,7 +103,7 @@ export default function AssignProviderModal({ job, mode = 'assign', onClose, onA
           </dl>
 
           <label className="assign-field" htmlFor="assign-provider">
-            Provider
+            {workerTitle(job.category)}
             <select
               id="assign-provider"
               value={providerId}
@@ -98,7 +111,9 @@ export default function AssignProviderModal({ job, mode = 'assign', onClose, onA
               onChange={(event) => setProviderId(event.target.value)}
             >
               <option value="">
-                {providers.isPending ? 'Loading providers…' : 'Choose a provider'}
+                {providers.isPending
+                  ? 'Loading providers…'
+                  : 'Choose ' + articleFor(workerName(job.category)) + ' ' + workerName(job.category)}
               </option>
               {providerList.map((provider) => (
                 <option key={provider.id} value={provider.id}>
@@ -143,12 +158,16 @@ export default function AssignProviderModal({ job, mode = 'assign', onClose, onA
             loading={assign.isPending}
             disabled={providers.isPending || providers.isError || providerList.length === 0}
           >
-            {error ? 'Retry' : reassigning ? 'Change provider' : 'Assign'}
+            {error ? 'Retry' : reassigning ? changeWorkerLabel(job.category) : assignActionLabel(job.category)}
           </Button>
         </form>
       ) : null}
     </Modal>
   )
+}
+
+function articleFor(name) {
+  return /^[aeiou]/i.test(name) ? 'an' : 'a'
 }
 
 function providerLabel(provider) {

@@ -6,7 +6,7 @@ import EmptyState from '../../components/EmptyState.jsx'
 import PhotoViewer from '../../components/PhotoViewer.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import UrgentTag from '../../components/UrgentTag.jsx'
-import { categoryLabel } from '../../lib/jobStatus.js'
+import { assignActionLabel, categoryLabel, changeWorkerLabel, onTheWayLabel } from '../../lib/jobStatus.js'
 import { useSignedUrl } from '../../lib/photos.js'
 import AssignProviderModal from './AssignProviderModal.jsx'
 import { fetchLandlordJob } from './api.js'
@@ -16,7 +16,6 @@ import './JobDetailsPage.css'
 const EVENT_LABELS = {
   pending: 'Reported',
   assigned: 'Assigned',
-  on_the_way: 'On the way',
   done: 'Done',
 }
 
@@ -81,7 +80,10 @@ export default function JobDetailsPage() {
               {job.urgent ? <UrgentTag /> : null}
             </h1>
             {job.description ? <p className="job-details-description">{job.description}</p> : null}
-            <StatusBadge status={job.status} />
+            <StatusBadge
+              status={job.status}
+              label={job.status === 'on_the_way' ? onTheWayLabel(job.category) : undefined}
+            />
 
             <section className="job-details-person" aria-labelledby="job-tenant-heading">
               <h2 id="job-tenant-heading">Tenant</h2>
@@ -105,7 +107,7 @@ export default function JobDetailsPage() {
                   setAssignOpen(true)
                 }}
               >
-                Assign provider
+                {assignActionLabel(job.category)}
               </Button>
             ) : null}
             {job.status === 'assigned' && job.providerId ? (
@@ -118,7 +120,7 @@ export default function JobDetailsPage() {
                   setAssignOpen(true)
                 }}
               >
-                Change provider
+                {changeWorkerLabel(job.category)}
               </Button>
             ) : null}
 
@@ -148,7 +150,11 @@ export default function JobDetailsPage() {
                 <ol className="job-timeline">
                   {job.events.map((event) => (
                     <li key={event.id}>
-                      <span className="job-timeline-label">{EVENT_LABELS[event.toStatus] || 'Updated'}</span>
+                      <span className="job-timeline-label">
+                        {event.toStatus === 'on_the_way'
+                          ? onTheWayLabel(job.category)
+                          : EVENT_LABELS[event.toStatus] || 'Updated'}
+                      </span>
                       {event.note?.startsWith('Reassigned from ') ? (
                         <span className="job-timeline-note">{event.note}</span>
                       ) : null}

@@ -229,6 +229,11 @@
     align-self: center;
   }
 
+  .jobs-status .status-badge {
+    max-width: 9.5rem;
+    text-align: center;
+  }
+
   .jobs-issue {
     grid-area: issue;
   }

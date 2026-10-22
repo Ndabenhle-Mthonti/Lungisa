@@ -5,7 +5,7 @@ import EmptyState from '../../components/EmptyState.jsx'
 import PhotoViewer from '../../components/PhotoViewer.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import UrgentTag from '../../components/UrgentTag.jsx'
-import { categoryLabel } from '../../lib/jobStatus.js'
+import { assignActionLabel, categoryLabel, changeWorkerLabel, onTheWayLabel } from '../../lib/jobStatus.js'
 import { useJobThumbnail, useSignedUrl } from '../../lib/photos.js'
 import AssignProviderModal from './AssignProviderModal.jsx'
 import { useLandlordJobs } from './useLandlordJobs.js'
@@ -222,19 +222,22 @@ function JobRow({ job, onAssign, onReassign }) {
       </td>
       <td className="jobs-status" data-label="Status">
         <span className="jobs-label">Status</span>
-        <StatusBadge status={job.status} />
+        <StatusBadge
+          status={job.status}
+          label={job.status === 'on_the_way' ? onTheWayLabel(job.category) : undefined}
+        />
       </td>
       <td className="jobs-action" data-label="Action">
         <span className="jobs-label">Action</span>
         {job.status === 'pending' ? (
           <Button variant="primary" size="md" aria-haspopup="dialog" onClick={() => onAssign(job)}>
-            Assign provider
+            {assignActionLabel(job.category)}
           </Button>
         ) : (
           <div className="jobs-actions">
             {job.status === 'assigned' && job.providerId ? (
               <Button variant="secondary" size="md" aria-haspopup="dialog" onClick={() => onReassign(job)}>
-                Change provider
+                {changeWorkerLabel(job.category)}
               </Button>
             ) : null}
             <Link className="button button-secondary button-md" to={'/landlord/jobs/' + job.id}>
