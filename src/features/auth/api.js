@@ -42,3 +42,12 @@ export async function updatePassword(password) {
   const { error } = await supabase.auth.updateUser({ password })
   if (error) throw error
 }
+
+// Checks a short email link. The long token address is what Chrome and Edge were closing.
+export async function verifyEmailLink(tokenHash, type) {
+  const { error } = await supabase.auth.verifyOtp({
+    token_hash: tokenHash,
+    type,
+  })
+  if (error) throw error
+}

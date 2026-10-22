@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { ROLE_HOME } from '../../app/RoleGuard.jsx'
 import Button from '../../components/Button.jsx'
 import Spinner from '../../components/Spinner.jsx'
-import { updatePassword } from './api.js'
+import { updatePassword, verifyEmailLink } from './api.js'
 import { useAuth } from './AuthProvider.jsx'
 import { useProfile } from './useProfile.js'
 import './LoginPage.css'
@@ -30,7 +30,8 @@ function readResetLink() {
   )
   const linkType = hash.get('type') || search.get('type')
   const fromEmail = linkType === 'recovery' || linkType === 'invite'
-  return { hasError, fromEmail, linkType }
+  const tokenHash = search.get('token_hash') || ''
+  return { hasError, fromEmail, linkType, tokenHash }
 }
 
 function InvalidResetLink() {
@@ -50,6 +51,8 @@ export default function ResetPasswordPage() {
   const { session, loading, passwordRecovery, signOut } = useAuth()
   const profile = useProfile()
   const [arrival] = useState(readResetLink)
+  const [tokenReady, setTokenReady] = useState(!arrival.tokenHash)
+  const [checkingLink, setCheckingLink] = useState(false)
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [formError, setFormError] = useState('')
@@ -62,7 +65,21 @@ export default function ResetPasswordPage() {
     defaultValues: { password: '', confirm: '' },
   })
 
-  const linkReady = passwordRecovery || (arrival.fromEmail && Boolean(session))
+  const linkReady = passwordRecovery || (arrival.fromEmail && (Boolean(session) || tokenReady))
+
+  async function continueFromEmail() {
+    setFormError('')
+    setCheckingLink(true)
+    try {
+      await verifyEmailLink(arrival.tokenHash, arrival.linkType)
+      window.history.replaceState(null, '', '/reset-password')
+      setTokenReady(true)
+    } catch {
+      setFormError('This link is invalid or has expired.')
+    } finally {
+      setCheckingLink(false)
+    }
+  }
 
   async function onSubmit(values) {
     setFormError('')
@@ -84,6 +101,27 @@ export default function ResetPasswordPage() {
   }
 
   if (arrival.hasError) return <InvalidResetLink />
+
+  if (arrival.tokenHash && !tokenReady) {
+    return (
+      <main className="login-page">
+        <h1>Lungisa</h1>
+        <form
+          className="login-form"
+          onSubmit={(event) => {
+            event.preventDefault()
+            continueFromEmail()
+          }}
+        >
+          <p className="login-note">Continue to choose your password.</p>
+          {formError ? <p className="login-error" role="alert">{formError}</p> : null}
+          <Button type="submit" variant="primary" size="lg" loading={checkingLink}>
+            {formError ? 'Retry' : 'Continue'}
+          </Button>
+        </form>
+      </main>
+    )
+  }
 
   if (loading) {
     return (

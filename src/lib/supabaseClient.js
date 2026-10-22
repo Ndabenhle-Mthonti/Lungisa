@@ -17,7 +17,7 @@ function redirectPasswordLink() {
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
   const search = new URLSearchParams(window.location.search)
   const linkType = hash.get('type') || search.get('type')
-  const fromEmail = linkType === 'invite' || linkType === 'recovery'
+  const fromEmail = linkType === 'invite' || linkType === 'recovery' || search.has('token_hash')
   if (!fromEmail || window.location.pathname === '/reset-password') return false
   window.location.replace('/reset-password' + window.location.search + window.location.hash)
   return true
