@@ -20,11 +20,13 @@ import Modal from './Modal.jsx'
 
 export default function PhotoViewer({ src, thumbSrc, alt, onOpen, onThumbError, label, closeSize = 'md' }) {
   const [open, setOpen] = useState(false)
+  const [failed, setFailed] = useState(false)
   const thumb = thumbSrc || src
 
   function openPhoto() {
     if (!src && label) return
     if (onOpen) onOpen()
+    setFailed(false)
     setOpen(true)
   }
 
@@ -44,7 +46,15 @@ export default function PhotoViewer({ src, thumbSrc, alt, onOpen, onThumbError, 
         </button>
       )}
       <Modal open={open} title="Photo" onClose={closePhoto} closeSize={closeSize}>
-        <img className="photo-viewer-full" src={src} alt={alt} loading="lazy" />
+        {open && !failed ? (
+          <img
+            className="photo-viewer-full"
+            src={src}
+            alt={alt}
+            onError={() => setFailed(true)}
+          />
+        ) : null}
+        {open && failed ? <p role="alert">The photo could not be opened.</p> : null}
       </Modal>
     </>
   )
