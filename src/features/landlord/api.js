@@ -73,6 +73,7 @@ export async function fetchLandlordJob(jobId) {
         'description',
         'status',
         'is_urgent',
+        'reopen_note',
         'photo_path',
         'proof_photo_path',
         'unit:units!jobs_unit_id_fkey(label)',
@@ -105,6 +106,7 @@ export async function fetchLandlordJob(jobId) {
     description: data.description ?? '',
     status: data.status,
     urgent: data.is_urgent === true,
+    reopenNote: data.reopen_note ?? '',
     photoPath: data.photo_path ?? '',
     proofPath: data.proof_photo_path ?? '',
     unitLabel: unit?.label ?? '',
@@ -173,6 +175,25 @@ export class JobChangedError extends Error {
     super('This job already changed. Refresh to see it.')
     this.name = 'JobChangedError'
   }
+}
+
+// The landlord can mark a job urgent, or clear it, without moving the status.
+export async function setJobUrgent({ jobId, urgent }) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const landlordId = sessionData.session?.user?.id
+  if (!landlordId) throw new Error('Please sign in again.')
+
+  const { data, error } = await supabase
+    .from('jobs')
+    .update({ is_urgent: urgent })
+    .eq('id', jobId)
+    .eq('landlord_id', landlordId)
+    .select('id, is_urgent')
+
+  if (error || data?.length !== 1 || data[0].is_urgent !== urgent) {
+    throw new Error('Urgent could not be changed. Please try again.')
+  }
+  return data[0]
 }
 
 // Moves a pending job to assigned. A second click, or another tab, changes no row.

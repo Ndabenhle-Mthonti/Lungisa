@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
@@ -9,9 +9,15 @@ import UrgentTag from '../../components/UrgentTag.jsx'
 import { assignActionLabel, categoryLabel, changeWorkerLabel, onTheWayLabel } from '../../lib/jobStatus.js'
 import { useSignedUrl } from '../../lib/photos.js'
 import AssignProviderModal from './AssignProviderModal.jsx'
-import { fetchLandlordJob } from './api.js'
+import { fetchLandlordJob, setJobUrgent } from './api.js'
 import LandlordShell from './LandlordShell.jsx'
 import './JobDetailsPage.css'
+
+function timelineNote(note) {
+  const line = String(note || '').split('\n')[0]
+  if (line.startsWith('Reassigned from ') || line.startsWith('Not fixed: ')) return line
+  return ''
+}
 
 const EVENT_LABELS = {
   pending: 'Reported',
@@ -80,10 +86,14 @@ export default function JobDetailsPage() {
               {job.urgent ? <UrgentTag /> : null}
             </h1>
             {job.description ? <p className="job-details-description">{job.description}</p> : null}
+            {job.reopenNote && job.status !== 'done' ? (
+              <p className="job-details-reopen">Not fixed: {job.reopenNote}</p>
+            ) : null}
             <StatusBadge
               status={job.status}
               label={job.status === 'on_the_way' ? onTheWayLabel(job.category) : undefined}
             />
+            <UrgentControl job={job} />
 
             <section className="job-details-person" aria-labelledby="job-tenant-heading">
               <h2 id="job-tenant-heading">Tenant</h2>
@@ -155,8 +165,8 @@ export default function JobDetailsPage() {
                           ? onTheWayLabel(job.category)
                           : EVENT_LABELS[event.toStatus] || 'Updated'}
                       </span>
-                      {event.note?.startsWith('Reassigned from ') ? (
-                        <span className="job-timeline-note">{event.note}</span>
+                      {timelineNote(event.note) ? (
+                        <span className="job-timeline-note">{timelineNote(event.note)}</span>
                       ) : null}
                       <time dateTime={event.createdAt}>{formatEventTime(event.createdAt)}</time>
                     </li>
@@ -186,6 +196,35 @@ export default function JobDetailsPage() {
         />
       </div>
     </LandlordShell>
+  )
+}
+
+function UrgentControl({ job }) {
+  const queryClient = useQueryClient()
+  const [error, setError] = useState('')
+  const toggle = useMutation({
+    mutationFn: () => setJobUrgent({ jobId: job.id, urgent: !job.urgent }),
+    onSuccess: async () => {
+      setError('')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['landlord-job', job.id] }),
+        queryClient.invalidateQueries({ queryKey: ['landlord-jobs'] }),
+      ])
+    },
+    onError: (toggleError) => setError(toggleError.message),
+  })
+
+  return (
+    <div className="job-details-urgent">
+      <Button variant="secondary" size="md" loading={toggle.isPending} onClick={() => toggle.mutate()}>
+        {error ? 'Retry' : job.urgent ? 'Remove urgent' : 'Mark as urgent'}
+      </Button>
+      {error ? (
+        <p className="job-details-error-text" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   )
 }
 

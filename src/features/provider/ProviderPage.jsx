@@ -136,6 +136,7 @@ function JobCard({ job, onDone }) {
         </a>
       ) : null}
       <p className="provider-job-issue">Issue: {job.description || 'No details were added'}</p>
+      {job.reopenNote ? <p className="provider-job-reopen">Not fixed: {job.reopenNote}</p> : null}
       <ViewPhoto path={job.photoPath} alt={'Problem at ' + place} />
       <StatusBadge
         status={job.status}

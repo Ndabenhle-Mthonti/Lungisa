@@ -39,6 +39,7 @@ function mapJob(row) {
     unitLabel: row.unit_label ?? '',
     tenantName: row.tenant_name ?? '',
     tenantPhone: row.tenant_phone ?? '',
+    reopenNote: row.reopen_note ?? '',
   }
 }
 

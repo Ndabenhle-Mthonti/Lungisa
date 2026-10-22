@@ -34,6 +34,24 @@
   font-size: 1.5rem;
 }
 
+.job-details-urgent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+
+.job-details-error-text {
+  margin: 0;
+  color: var(--color-pending);
+  font-weight: 700;
+}
+
+.job-details-reopen {
+  margin: 0;
+  font-weight: 700;
+}
+
 .job-details-description,
 .job-details-body p,
 .job-details-body h2 {

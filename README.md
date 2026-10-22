@@ -113,8 +113,9 @@ Run every file in `supabase/migrations` once, in this order, on a new project. T
 18. `0018_reopen_note.sql`
 19. `0019_privacy_notice.sql`
 20. `0020_people.sql`
+21. `0021_spec_gaps.sql`
 
-`0020_people.sql` is safe to run again. It lets a landlord edit or remove a tenant or a provider.
+`0020_people.sql` is safe to run again. It lets a landlord edit or remove a tenant or a provider. `0021_spec_gaps.sql` lets the landlord mark a job urgent after it is reported, and shows the tenant's Not fixed note to the provider.
 
 ## Security check
 
