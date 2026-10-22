@@ -50,15 +50,24 @@ main {
 }
 
 /*
-  A file input clipped to 1px often drops the photo on a phone.
-  This one stays a real control, just invisible, so the camera can hand the file back.
+  The file control covers the whole button. A 1px or fully invisible input
+  drops the photo when a phone camera closes.
 */
-.photo-file {
+.photo-pick {
+  position: relative;
+  overflow: hidden;
+}
+
+.photo-pick .photo-file {
   position: absolute;
-  width: 16px;
-  height: 16px;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
-  opacity: 0;
-  overflow: hidden;
+  border: 0;
+  opacity: 0.02;
+  font-size: 16px;
+  cursor: pointer;
 }

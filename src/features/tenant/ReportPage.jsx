@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import Button from '../../components/Button.jsx'
 import RoleHeader from '../../components/RoleHeader.jsx'
+import { readChosenPhoto } from '../../lib/photos.js'
 import { fetchTenantPlace, sendReport } from './api.js'
 import './ReportPage.css'
 
@@ -30,6 +31,7 @@ export default function ReportPage() {
   const place = useQuery({
     queryKey: ['tenant-place'],
     queryFn: fetchTenantPlace,
+    refetchOnWindowFocus: false,
   })
 
   useEffect(() => {
@@ -39,8 +41,7 @@ export default function ReportPage() {
   }, [previewUrl])
 
   function choosePhoto(event) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
+    const file = readChosenPhoto(event)
     if (!file) return
     setPreviewUrl(URL.createObjectURL(file))
     setPhoto(file)
@@ -159,17 +160,16 @@ export default function ReportPage() {
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview of the problem" loading="lazy" />
               ) : null}
-              <label className="report-photo-pick button button-secondary button-lg">
-                {photo ? 'Retake' : 'Take a Photo'}
+              <div className="photo-pick report-photo-pick button button-secondary button-lg">
+                <span>{photo ? 'Retake' : 'Take a Photo'}</span>
                 <input
                   className="photo-file"
                   type="file"
                   accept="image/*"
-                  capture="environment"
                   aria-label="Photo of the problem"
                   onChange={choosePhoto}
                 />
-              </label>
+              </div>
             </div>
 
             {error ? (

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Button from '../../components/Button.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
@@ -7,7 +7,7 @@ import RoleHeader from '../../components/RoleHeader.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import UrgentTag from '../../components/UrgentTag.jsx'
 import { categoryLabel } from '../../lib/jobStatus.js'
-import { useSignedUrl } from '../../lib/photos.js'
+import { readChosenPhoto, useSignedUrl } from '../../lib/photos.js'
 import { useJobsRealtime } from '../../lib/useJobsRealtime.js'
 import { usePullToRefresh } from '../../lib/usePullToRefresh.js'
 import { useAuth } from '../auth/AuthProvider.jsx'
@@ -162,7 +162,6 @@ function JobCard({ job, onDone }) {
 
 function ProofSection({ job, place, onDone }) {
   const queryClient = useQueryClient()
-  const fileRef = useRef(null)
   const [photo, setPhoto] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const finish = useMutation({
@@ -184,13 +183,8 @@ function ProofSection({ job, place, onDone }) {
     }
   }, [previewUrl])
 
-  function openCamera() {
-    fileRef.current?.click()
-  }
-
   function choosePhoto(event) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
+    const file = readChosenPhoto(event)
     if (!file) return
     setPreviewUrl(URL.createObjectURL(file))
     setPhoto(file)
@@ -200,24 +194,17 @@ function ProofSection({ job, place, onDone }) {
   return (
     <div className="provider-proof">
       {previewUrl ? <img src={previewUrl} alt="Preview of the finished work" loading="lazy" /> : null}
-      <Button
-        type="button"
-        variant={photo ? 'secondary' : 'primary'}
-        size="xl"
-        disabled={finish.isPending}
-        onClick={openCamera}
-      >
-        {photo ? 'Retake photo' : 'Add a proof photo'}
-      </Button>
-      <input
-        ref={fileRef}
-        className="photo-file"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        aria-label="Photo of the finished work"
-        onChange={choosePhoto}
-      />
+      <div className={`photo-pick button button-xl ${photo ? 'button-secondary' : 'button-primary'}`}>
+        <span>{photo ? 'Retake photo' : 'Add a proof photo'}</span>
+        <input
+          className="photo-file"
+          type="file"
+          accept="image/*"
+          aria-label="Photo of the finished work"
+          disabled={finish.isPending}
+          onChange={choosePhoto}
+        />
+      </div>
       <Button
         variant="primary"
         size="xl"

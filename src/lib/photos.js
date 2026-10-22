@@ -103,11 +103,28 @@ export function proofPhotoPath(landlordId, jobId, timestamp = Date.now()) {
   return landlordId + '/' + jobId + '/proof-' + timestamp + '.jpg'
 }
 
-// A phone sometimes leaves the type blank for a HEIC photo, so the file name is checked too.
+// Reads the photo the phone just took. The file is copied first, because clearing
+// the control in the same moment can wipe the picture on a phone.
+export function readChosenPhoto(event) {
+  const input = event.currentTarget
+  const picked = input.files?.[0]
+  if (!picked || picked.size === 0) return null
+  const file = new File([picked], picked.name || 'photo.jpg', {
+    type: picked.type,
+    lastModified: picked.lastModified,
+  })
+  window.setTimeout(() => {
+    input.value = ''
+  }, 0)
+  return file
+}
+
+// A phone camera often leaves the type and the file name blank.
 function isAllowedPhoto(file) {
   const type = (file?.type || '').toLowerCase()
-  if (ALLOWED_TYPES.has(type)) return true
-  if (type && type !== 'application/octet-stream') return false
+  if (ALLOWED_TYPES.has(type) || type.startsWith('image/')) return true
   const name = (file?.name || '').toLowerCase()
-  return ['.jpg', '.jpeg', '.png', '.heic', '.heif'].some((ext) => name.endsWith(ext))
+  if (['.jpg', '.jpeg', '.png', '.heic', '.heif', '.webp'].some((ext) => name.endsWith(ext))) return true
+  if (!type || type === 'application/octet-stream') return file.size > 0
+  return false
 }
