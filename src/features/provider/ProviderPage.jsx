@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Button from '../../components/Button.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
@@ -162,6 +162,7 @@ function JobCard({ job, onDone }) {
 
 function ProofSection({ job, place, onDone }) {
   const queryClient = useQueryClient()
+  const previewRef = useRef(null)
   const [photo, setPhoto] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const finish = useMutation({
@@ -183,8 +184,8 @@ function ProofSection({ job, place, onDone }) {
     }
   }, [previewUrl])
 
-  function choosePhoto(event) {
-    const file = readChosenPhoto(event)
+  async function choosePhoto(event) {
+    const file = await readChosenPhoto(event)
     if (!file) return
     setPreviewUrl(URL.createObjectURL(file))
     setPhoto(file)
@@ -193,7 +194,7 @@ function ProofSection({ job, place, onDone }) {
 
   return (
     <div className="provider-proof">
-      {previewUrl ? <img src={previewUrl} alt="Preview of the finished work" loading="lazy" /> : null}
+      {previewUrl ? <img ref={previewRef} src={previewUrl} alt="Preview of the finished work" /> : null}
       <div className={`photo-pick button button-xl ${photo ? 'button-secondary' : 'button-primary'}`}>
         <span>{photo ? 'Retake photo' : 'Add a proof photo'}</span>
         <input
@@ -210,7 +211,7 @@ function ProofSection({ job, place, onDone }) {
         size="xl"
         loading={finish.isPending}
         disabled={!photo}
-        onClick={() => finish.mutate({ jobId: job.id, landlordId: job.landlordId, photo })}
+        onClick={() => finish.mutate({ jobId: job.id, landlordId: job.landlordId, photo, preview: previewRef.current })}
       >
         {finish.isError ? 'Retry' : 'Mark as done'}
       </Button>

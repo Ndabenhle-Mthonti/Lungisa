@@ -79,13 +79,13 @@ export class JobChangedError extends Error {
 
 // Stores the proof photo first. The job becomes done only after that file is saved,
 // and only while the row is still on the way.
-export async function markDone({ jobId, landlordId, photo }) {
+export async function markDone({ jobId, landlordId, photo, preview }) {
   const { data: sessionData } = await supabase.auth.getSession()
   const providerId = sessionData.session?.user?.id
   if (!providerId) throw new Error('Please sign in again.')
   if (!photo) throw new Error('Add a proof photo before marking this job done.')
 
-  const file = await compressPhoto(photo)
+  const file = await compressPhoto(photo, preview)
   const path = proofPhotoPath(landlordId, jobId)
   let storedPath = ''
   try {

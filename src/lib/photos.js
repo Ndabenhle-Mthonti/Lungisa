@@ -19,13 +19,17 @@ const ALLOWED_TYPES = new Set([
 // Shrinks a phone photo to a JPEG. The long edge is about 1280px.
 // The picture is drawn again as a new JPEG, so EXIF is dropped, including where it was taken.
 // iPhone photos are often HEIC. The usual compressor rejects those, so Safari draws them instead.
-export async function compressPhoto(file) {
+export async function compressPhoto(file, preview) {
   if (!isAllowedPhoto(file)) {
     throw new Error('Please choose a photo from your camera or photo library.')
   }
   if (file.size > TEN_MB) {
     throw new Error('This photo is too large. Please choose one under 10 MB.')
   }
+
+  // The preview is already on screen, so draw that. iPhone files often cannot be read again later.
+  const shown = await jpegFromImage(preview)
+  if (shown) return shown
 
   if (isHeic(file)) {
     const drawn = await compressWithCanvas(file)
@@ -48,6 +52,87 @@ export async function compressPhoto(file) {
     if (drawn) return drawn
     throw new Error('This photo could not be prepared. Please try a different one.')
   }
+}
+
+function jpegFromImage(image) {
+  if (!image) return Promise.resolve(null)
+  return whenImageReady(image).then((ready) => {
+    if (!ready) return null
+    return drawJpeg(ready)
+  })
+}
+
+function whenImageReady(image) {
+  if (image.complete && image.naturalWidth) return Promise.resolve(image)
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(() => resolve(image.naturalWidth ? image : null), 2000)
+    image.addEventListener('load', () => {
+      window.clearTimeout(timer)
+      resolve(image)
+    }, { once: true })
+    image.addEventListener('error', () => {
+      window.clearTimeout(timer)
+      resolve(null)
+    }, { once: true })
+  })
+}
+
+function drawJpeg(image) {
+  return new Promise((resolve) => {
+    try {
+      const longest = Math.max(image.naturalWidth, image.naturalHeight) || 1
+      const scale = Math.min(1, MAX_EDGE / longest)
+      const width = Math.max(1, Math.round(image.naturalWidth * scale))
+      const height = Math.max(1, Math.round(image.naturalHeight * scale))
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        resolve(null)
+        return
+      }
+      ctx.drawImage(image, 0, 0, width, height)
+      let settled = false
+      const finish = (blob) => {
+        if (settled) return
+        settled = true
+        resolve(blob ? new File([blob], 'photo.jpg', { type: 'image/jpeg' }) : null)
+      }
+      const timer = window.setTimeout(() => {
+        try {
+          finish(blobFromCanvas(canvas))
+        } catch {
+          finish(null)
+        }
+      }, 1500)
+      canvas.toBlob(
+        (blob) => {
+          window.clearTimeout(timer)
+          if (blob) finish(blob)
+          else {
+            try {
+              finish(blobFromCanvas(canvas))
+            } catch {
+              finish(null)
+            }
+          }
+        },
+        'image/jpeg',
+        0.7,
+      )
+    } catch {
+      resolve(null)
+    }
+  })
+}
+
+function blobFromCanvas(canvas) {
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.7)
+  const binary = atob(dataUrl.split(',')[1] || '')
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: 'image/jpeg' })
 }
 
 // Uses the same decoder that showed the preview. That succeeds for iPhone photos the compressor refuses.
@@ -167,17 +252,17 @@ export function proofPhotoPath(landlordId, jobId, timestamp = Date.now()) {
 
 // Reads the photo the phone just took. The file is copied first, because clearing
 // the control in the same moment can wipe the picture on a phone.
-export function readChosenPhoto(event) {
+export async function readChosenPhoto(event) {
   const input = event.currentTarget
   const picked = input.files?.[0]
   if (!picked || picked.size === 0) return null
-  const file = new File([picked], picked.name || 'photo.jpg', {
-    type: picked.type,
+  // Copy the bytes immediately. iPhone drops the original file once the picker closes.
+  const bytes = await picked.arrayBuffer()
+  const file = new File([bytes], picked.name || 'photo.jpg', {
+    type: picked.type || 'image/jpeg',
     lastModified: picked.lastModified,
   })
-  window.setTimeout(() => {
-    input.value = ''
-  }, 0)
+  input.value = ''
   return file
 }
 

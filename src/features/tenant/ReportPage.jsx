@@ -19,6 +19,7 @@ export default function ReportPage() {
   const navigate = useNavigate()
   const jobIdRef = useRef(null)
   const uploadedRef = useRef(false)
+  const previewRef = useRef(null)
   const [category, setCategory] = useState('')
   const [urgent, setUrgent] = useState(false)
   const [description, setDescription] = useState('')
@@ -40,8 +41,8 @@ export default function ReportPage() {
     }
   }, [previewUrl])
 
-  function choosePhoto(event) {
-    const file = readChosenPhoto(event)
+  async function choosePhoto(event) {
+    const file = await readChosenPhoto(event)
     if (!file) return
     setPreviewUrl(URL.createObjectURL(file))
     setPhoto(file)
@@ -71,6 +72,7 @@ export default function ReportPage() {
         isUrgent: chosenUrgent,
         description: chosenDescription,
         photo: chosenPhoto,
+        preview: previewRef.current,
         alreadyUploaded: uploadedRef.current,
       })
       uploadedRef.current = true
@@ -158,7 +160,7 @@ export default function ReportPage() {
 
             <div className="report-photo">
               {previewUrl ? (
-                <img src={previewUrl} alt="Preview of the problem" loading="lazy" />
+                <img ref={previewRef} src={previewUrl} alt="Preview of the problem" />
               ) : null}
               <div className="photo-pick report-photo-pick button button-secondary button-lg">
                 <span>{photo ? 'Retake' : 'Take a Photo'}</span>

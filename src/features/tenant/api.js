@@ -41,7 +41,7 @@ export async function fetchTenantPlace() {
 // Compresses the photo, stores it, then creates the pending job.
 // jobId is chosen in the browser so the file path and the row match.
 // alreadyUploaded is true on a retry after the file was saved but the row was not.
-export async function sendReport({ jobId, category, description, photo, isUrgent = false, alreadyUploaded }) {
+export async function sendReport({ jobId, category, description, photo, preview, isUrgent = false, alreadyUploaded }) {
   if (!CATEGORIES.includes(category)) {
     throw new Error('Choose what the problem is.')
   }
@@ -62,7 +62,7 @@ export async function sendReport({ jobId, category, description, photo, isUrgent
   }
 
   if (!alreadyUploaded) {
-    const compressed = await compressPhoto(photo)
+    const compressed = await compressPhoto(photo, preview)
     try {
       await uploadPhoto({ bucket: 'job-photos', path: photoPath, file: compressed })
     } catch (error) {
