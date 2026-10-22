@@ -103,7 +103,7 @@ Deno.serve(async (request) => {
     return json(429, { error: 'You can send 20 invites an hour. Try again later.' })
   }
 
-  const redirectTo = inviteRedirect()
+  const redirectTo = passwordPageUrl(request)
   const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(
     invite.email,
     redirectTo ? { redirectTo } : undefined,
@@ -244,7 +244,23 @@ function requiredText(
   return { ok: true, value: trimmed }
 }
 
-function inviteRedirect() {
+// New invites open the password page on the same site the landlord is using.
+// INVITE_REDIRECT_URL still wins when it is set, so a fixed live address can be used.
+function passwordPageUrl(request: Request) {
+  const configured = configuredRedirect()
+  if (configured) return configured
+  const origin = request.headers.get('origin') ?? ''
+  try {
+    const url = new URL(origin)
+    if (url.protocol !== 'https:' && url.hostname !== 'localhost') return ''
+    if (url.username || url.password) return ''
+    return url.origin + '/reset-password'
+  } catch {
+    return ''
+  }
+}
+
+function configuredRedirect() {
   const value = Deno.env.get('INVITE_REDIRECT_URL')?.trim()
   if (!value) return ''
   try {

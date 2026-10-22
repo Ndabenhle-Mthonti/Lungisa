@@ -48,3 +48,17 @@ main {
   white-space: nowrap;
   border: 0;
 }
+
+/*
+  A file input clipped to 1px often drops the photo on a phone.
+  This one stays a real control, just invisible, so the camera can hand the file back.
+*/
+.photo-file {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  overflow: hidden;
+}

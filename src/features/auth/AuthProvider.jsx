@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabaseClient.js'
+import { leavingForPasswordPage, supabase } from '../../lib/supabaseClient.js'
 
 const AuthContext = createContext(null)
 
@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   useEffect(() => {
+    if (leavingForPasswordPage) return undefined
     let ignore = false
 
     // Subscribe first so a reset link is not missed while the session loads.

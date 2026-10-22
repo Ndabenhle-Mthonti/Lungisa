@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { ROLE_HOME } from '../../app/RoleGuard.jsx'
 import Button from '../../components/Button.jsx'
 import Spinner from '../../components/Spinner.jsx'
 import { updatePassword } from './api.js'
 import { useAuth } from './AuthProvider.jsx'
+import { useProfile } from './useProfile.js'
 import './LoginPage.css'
 
 const resetSchema = z
@@ -28,7 +30,7 @@ function readResetLink() {
   )
   const linkType = hash.get('type') || search.get('type')
   const fromEmail = linkType === 'recovery' || linkType === 'invite'
-  return { hasError, fromEmail }
+  return { hasError, fromEmail, linkType }
 }
 
 function InvalidResetLink() {
@@ -46,7 +48,9 @@ function InvalidResetLink() {
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
   const { session, loading, passwordRecovery, signOut } = useAuth()
+  const profile = useProfile()
   const [arrival] = useState(readResetLink)
+  const [passwordSaved, setPasswordSaved] = useState(false)
   const [formError, setFormError] = useState('')
   const {
     register,
@@ -63,6 +67,10 @@ export default function ResetPasswordPage() {
     setFormError('')
     try {
       await updatePassword(values.password)
+      if (arrival.linkType === 'invite') {
+        setPasswordSaved(true)
+        return
+      }
       await signOut()
       navigate('/login', { replace: true, state: { passwordChanged: true } })
     } catch (error) {
@@ -85,6 +93,18 @@ export default function ResetPasswordPage() {
   }
 
   if (!linkReady) return <InvalidResetLink />
+
+  if (passwordSaved) {
+    if (profile.isLoading) {
+      return (
+        <main className="login-page">
+          <Spinner />
+        </main>
+      )
+    }
+    const home = ROLE_HOME[profile.data?.role]
+    return <Navigate to={home || '/login'} replace />
+  }
 
   return (
     <main className="login-page">

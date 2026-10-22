@@ -211,7 +211,7 @@ function ProofSection({ job, place, onDone }) {
       </Button>
       <input
         ref={fileRef}
-        className="visually-hidden"
+        className="photo-file"
         type="file"
         accept="image/*"
         capture="environment"

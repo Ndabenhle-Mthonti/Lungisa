@@ -16,7 +16,6 @@ const CATEGORIES = [
 
 export default function ReportPage() {
   const navigate = useNavigate()
-  const fileRef = useRef(null)
   const jobIdRef = useRef(null)
   const uploadedRef = useRef(false)
   const [category, setCategory] = useState('')
@@ -160,29 +159,26 @@ export default function ReportPage() {
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview of the problem" loading="lazy" />
               ) : null}
-              <Button
-                type="button"
-                variant="secondary"
-                size="lg"
-                onClick={() => fileRef.current?.click()}
-              >
+              <label className="report-photo-pick button button-secondary button-lg">
                 {photo ? 'Retake' : 'Take a Photo'}
-              </Button>
-              <input
-                ref={fileRef}
-                className="visually-hidden"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                aria-label="Photo of the problem"
-                onChange={choosePhoto}
-              />
+                <input
+                  className="photo-file"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  aria-label="Photo of the problem"
+                  onChange={choosePhoto}
+                />
+              </label>
             </div>
 
             {error ? (
               <p className="report-error" role="alert">{error}</p>
             ) : null}
 
+            {!category || !photo ? (
+              <p className="report-hint">Choose the problem and add a photo. Then you can send it.</p>
+            ) : null}
             <Button
               type="submit"
               variant="primary"
