@@ -1,17 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Button from '../../components/Button.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
+import Modal from '../../components/Modal.jsx'
 import Spinner from '../../components/Spinner.jsx'
-import { addUnit, fetchPeople, invitePerson, tradeLabel, TRADES } from './api.js'
+import { addUnit, fetchPeople, invitePerson, removePerson, tradeLabel, TRADES, updatePerson } from './api.js'
 import LandlordShell from './LandlordShell.jsx'
 import './PeoplePage.css'
 
 export default function PeoplePage() {
+  const [editing, setEditing] = useState(null)
+  const [removing, setRemoving] = useState(null)
+  const [notice, setNotice] = useState('')
   const people = useQuery({
     queryKey: ['landlord-people'],
     queryFn: fetchPeople,
   })
+  const takenUnitIds = (people.data?.tenants ?? []).map((person) => person.unit_id).filter(Boolean)
 
   return (
     <LandlordShell>
@@ -31,8 +36,13 @@ export default function PeoplePage() {
 
         {people.data ? (
           <>
+            {notice ? (
+              <p className="people-success" role="status">
+                {notice}
+              </p>
+            ) : null}
             <AddUnitForm properties={people.data.properties} />
-            <InviteTenantForm units={people.data.units} />
+            <InviteTenantForm units={people.data.units} takenUnitIds={takenUnitIds} />
             <InviteProviderForm />
             <PersonList
               title="Tenants"
@@ -40,6 +50,8 @@ export default function PeoplePage() {
               emptyMessage="Invite a tenant and they will show up here."
               people={people.data.tenants}
               detail={(person) => unitLabel(people.data.units, person.unit_id)}
+              onEdit={setEditing}
+              onRemove={setRemoving}
             />
             <PersonList
               title="Providers"
@@ -47,6 +59,29 @@ export default function PeoplePage() {
               emptyMessage="Invite a provider and they will show up here."
               people={people.data.providers}
               detail={(person) => tradeLabel(person.trade)}
+              onEdit={setEditing}
+              onRemove={setRemoving}
+            />
+            <EditPersonModal
+              person={editing}
+              onClose={() => setEditing(null)}
+              onSaved={(name) => {
+                setEditing(null)
+                setNotice(name + ' was updated.')
+              }}
+            />
+            <RemovePersonModal
+              person={removing}
+              flat={removing ? unitLabel(people.data.units, removing.unit_id) : ''}
+              onClose={() => setRemoving(null)}
+              onRemoved={(name, flat) => {
+                setRemoving(null)
+                setNotice(
+                  flat
+                    ? name + ' was removed. ' + flat + ' can be given to a new tenant.'
+                    : name + ' was removed.',
+                )
+              }}
             />
           </>
         ) : null}
@@ -121,12 +156,13 @@ function AddUnitForm({ properties }) {
   )
 }
 
-function InviteTenantForm({ units }) {
+function InviteTenantForm({ units, takenUnitIds }) {
   const queryClient = useQueryClient()
   const [unitId, setUnitId] = useState('')
   const [fields, setFields] = useState({ fullName: '', phone: '', email: '' })
   const [message, setMessage] = useState(null)
-  const selectedUnit = unitId || units[0]?.id || ''
+  const openUnits = units.filter((unit) => !takenUnitIds.includes(unit.id))
+  const selectedUnit = openUnits.some((unit) => unit.id === unitId) ? unitId : openUnits[0]?.id || ''
 
   const invite = useMutation({
     mutationFn: (body) => invitePerson(body),
@@ -142,7 +178,7 @@ function InviteTenantForm({ units }) {
 
   function submit(event) {
     event.preventDefault()
-    const problem = personProblem(fields) || (!selectedUnit ? 'Choose a flat.' : '')
+    const problem = personProblem(fields) || (!selectedUnit ? 'Choose a flat that has no tenant.' : '')
     setMessage(problem ? { type: 'error', text: problem } : null)
     if (problem) return
     invite.mutate({
@@ -157,13 +193,20 @@ function InviteTenantForm({ units }) {
   return (
     <section>
       <h2>Invite a tenant</h2>
+      {openUnits.length === 0 ? (
+        <p className="people-note">
+          {units.length === 0
+            ? 'Add a flat before you invite a tenant.'
+            : 'Every flat already has a tenant. Remove that tenant before you invite a new one.'}
+        </p>
+      ) : null}
       <form className="people-form" onSubmit={submit}>
         <PersonFields fields={fields} onChange={setFields} />
         <label className="people-field">
           Flat
           <select value={selectedUnit} onChange={(event) => setUnitId(event.target.value)}>
-            {units.length === 0 ? <option value="">No flats yet</option> : null}
-            {units.map((unit) => (
+            {openUnits.length === 0 ? <option value="">No open flat</option> : null}
+            {openUnits.map((unit) => (
               <option key={unit.id} value={unit.id}>
                 {unit.label}
               </option>
@@ -171,7 +214,7 @@ function InviteTenantForm({ units }) {
           </select>
         </label>
         <FormMessage message={message} />
-        <Button type="submit" size="md" loading={invite.isPending} disabled={units.length === 0}>
+        <Button type="submit" size="md" loading={invite.isPending} disabled={openUnits.length === 0}>
           {message?.type === 'error' ? 'Retry' : 'Send invite'}
         </Button>
       </form>
@@ -258,7 +301,7 @@ function PersonFields({ fields, onChange }) {
   )
 }
 
-function PersonList({ title, emptyTitle, emptyMessage, people, detail }) {
+function PersonList({ title, emptyTitle, emptyMessage, people, detail, onEdit, onRemove }) {
   return (
     <section>
       <h2>{title}</h2>
@@ -268,15 +311,133 @@ function PersonList({ title, emptyTitle, emptyMessage, people, detail }) {
         <ul className="people-list">
           {people.map((person) => (
             <li key={person.id}>
-              <span className="people-name">{person.full_name}</span>
-              <span>{person.phone || 'No phone number'}</span>
-              <span>{detail(person) || 'Not added yet'}</span>
+              <div className="people-person">
+                <span className="people-name">{person.full_name}</span>
+                <span>{person.phone || 'No phone number'}</span>
+                <span>{person.email || 'No email'}</span>
+                <span>{detail(person) || 'Not added yet'}</span>
+              </div>
+              <div className="people-person-actions">
+                <Button variant="secondary" size="md" onClick={() => onEdit(person)}>
+                  Edit
+                </Button>
+                <Button variant="secondary" size="md" onClick={() => onRemove(person)}>
+                  Remove
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
       )}
     </section>
   )
+}
+
+function EditPersonModal({ person, onClose, onSaved }) {
+  const queryClient = useQueryClient()
+  const [fields, setFields] = useState({ fullName: '', phone: '', email: '' })
+  const [message, setMessage] = useState(null)
+  const save = useMutation({
+    mutationFn: updatePerson,
+    onSuccess: async () => {
+      await refreshPeople(queryClient)
+      onSaved(fields.fullName.trim())
+    },
+    onError: (error) => setMessage({ type: 'error', text: error.message }),
+  })
+
+  useEffect(() => {
+    if (!person) return
+    setFields({
+      fullName: person.full_name ?? '',
+      phone: person.phone ?? '',
+      email: person.email ?? '',
+    })
+    setMessage(null)
+  }, [person])
+
+  function submit(event) {
+    event.preventDefault()
+    if (!person || save.isPending) return
+    const problem = personProblem(fields)
+    setMessage(problem ? { type: 'error', text: problem } : null)
+    if (problem) return
+    save.mutate({
+      person_id: person.id,
+      full_name: fields.fullName.trim(),
+      phone: fields.phone.trim(),
+      email: fields.email.trim(),
+    })
+  }
+
+  const title = person?.role === 'provider' ? 'Edit provider' : 'Edit tenant'
+
+  return (
+    <Modal open={Boolean(person)} title={title} onClose={onClose} canClose={!save.isPending}>
+      <form className="people-form" onSubmit={submit}>
+        <PersonFields fields={fields} onChange={setFields} />
+        <FormMessage message={message} />
+        <Button type="submit" size="md" loading={save.isPending}>
+          {message?.type === 'error' ? 'Retry' : 'Save'}
+        </Button>
+      </form>
+    </Modal>
+  )
+}
+
+function RemovePersonModal({ person, flat, onClose, onRemoved }) {
+  const queryClient = useQueryClient()
+  const [message, setMessage] = useState(null)
+  const remove = useMutation({
+    mutationFn: removePerson,
+    onSuccess: async () => {
+      const name = person?.full_name || 'This person'
+      await refreshPeople(queryClient)
+      onRemoved(name, person?.role === 'tenant' ? flat : '')
+    },
+    onError: (error) => setMessage({ type: 'error', text: error.message }),
+  })
+
+  useEffect(() => {
+    setMessage(null)
+  }, [person?.id])
+
+  const name = person?.full_name || 'this person'
+  const explanation = person?.role === 'provider'
+    ? 'Their name, phone, and email are deleted, and they cannot sign in. Jobs they have not finished go back to Pending.'
+    : 'Their name, phone, and email are deleted, and they cannot sign in. Past jobs stay.'
+      + (flat ? ' ' + flat + ' can then be given to a new tenant.' : '')
+
+  return (
+    <Modal open={Boolean(person)} title={'Remove ' + name} onClose={onClose} canClose={!remove.isPending}>
+      <div className="people-form">
+        <p className="people-note">{explanation}</p>
+        <FormMessage message={message} />
+        <Button
+          variant="danger"
+          size="md"
+          loading={remove.isPending}
+          onClick={() => {
+            if (!person || remove.isPending) return
+            setMessage(null)
+            remove.mutate(person.id)
+          }}
+        >
+          {message?.type === 'error' ? 'Retry' : 'Remove'}
+        </Button>
+      </div>
+    </Modal>
+  )
+}
+
+function refreshPeople(queryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['landlord-people'] }),
+    queryClient.invalidateQueries({ queryKey: ['landlord-jobs'] }),
+    queryClient.invalidateQueries({ queryKey: ['landlord-stats'] }),
+    queryClient.invalidateQueries({ queryKey: ['landlord-providers'] }),
+    queryClient.invalidateQueries({ queryKey: ['landlord-job'] }),
+  ])
 }
 
 function FormMessage({ message }) {

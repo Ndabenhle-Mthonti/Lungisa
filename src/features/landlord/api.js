@@ -108,7 +108,7 @@ export async function fetchLandlordJob(jobId) {
     photoPath: data.photo_path ?? '',
     proofPath: data.proof_photo_path ?? '',
     unitLabel: unit?.label ?? '',
-    tenantName: tenant?.full_name ?? '',
+    tenantName: tenant?.full_name || 'Former tenant',
     tenantPhone: tenant?.phone ?? '',
     providerId: provider?.id ?? null,
     provider: provider
@@ -139,7 +139,7 @@ function mapJob(row) {
     createdAt: row.created_at,
     photoPath: row.photo_path,
     unitLabel: unit?.label ?? '',
-    tenantName: tenant?.full_name ?? '',
+    tenantName: tenant?.full_name || 'Former tenant',
     tenantPhone: tenant?.phone ?? '',
     providerId: row.provider_id ?? null,
   }
@@ -263,15 +263,24 @@ export function tradeLabel(trade) {
 
 // The landlord's buildings, flats, and the people he invited.
 export async function fetchPeople() {
-  const [properties, units, profiles] = await Promise.all([
+  const [properties, units] = await Promise.all([
     supabase.from('properties').select('id, name').order('name'),
     supabase.from('units').select('id, label, property_id').order('label'),
-    supabase
+  ])
+  let profiles = await supabase
+    .from('profiles')
+    .select('id, full_name, phone, email, role, unit_id, trade')
+    .in('role', ['tenant', 'provider'])
+    .order('full_name')
+
+  // The email column arrives with the people migration. Until then, the list still loads.
+  if (profiles.error && String(profiles.error.message).toLowerCase().includes('email')) {
+    profiles = await supabase
       .from('profiles')
       .select('id, full_name, phone, role, unit_id, trade')
       .in('role', ['tenant', 'provider'])
-      .order('full_name'),
-  ])
+      .order('full_name')
+  }
 
   if (properties.error || units.error || profiles.error) {
     throw new Error('People could not be loaded. Please try again.')
@@ -302,12 +311,30 @@ export async function addUnit({ propertyId, label }) {
 // Sends the invite through the Edge Function. The browser never uses the service role key.
 export async function invitePerson(body) {
   const { data, error } = await supabase.functions.invoke('invite-user', { body })
-  if (error) throw new Error(await inviteErrorMessage(error))
+  if (error) throw new Error(await functionErrorMessage(error, 'The invite could not be sent. Please try again.'))
   if (!data?.id) throw new Error('The invite could not be sent. Please try again.')
   return data
 }
 
-async function inviteErrorMessage(error) {
+export async function updatePerson(body) {
+  const { data, error } = await supabase.functions.invoke('manage-person', {
+    body: { action: 'update', ...body },
+  })
+  if (error) throw new Error(await functionErrorMessage(error, 'The details could not be saved. Please try again.'))
+  if (!data?.id) throw new Error('The details could not be saved. Please try again.')
+  return data
+}
+
+export async function removePerson(personId) {
+  const { data, error } = await supabase.functions.invoke('manage-person', {
+    body: { action: 'remove', person_id: personId },
+  })
+  if (error) throw new Error(await functionErrorMessage(error, 'This person could not be removed. Please try again.'))
+  if (!data?.id) throw new Error('This person could not be removed. Please try again.')
+  return data
+}
+
+async function functionErrorMessage(error, fallback) {
   const context = error?.context
   if (context && typeof context.json === 'function') {
     try {
@@ -318,5 +345,5 @@ async function inviteErrorMessage(error) {
     }
   }
   if (typeof context?.error === 'string' && context.error) return context.error
-  return 'The invite could not be sent. Please try again.'
+  return fallback
 }

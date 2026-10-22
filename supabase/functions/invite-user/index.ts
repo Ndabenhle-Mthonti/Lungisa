@@ -87,6 +87,20 @@ Deno.serve(async (request) => {
       return json(500, { error: 'The flat could not be checked. Please try again.' })
     }
     if (!unit) return json(400, { error: 'Choose one of your own flats.' })
+
+    const { data: occupant, error: occupantError } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('role', 'tenant')
+      .eq('unit_id', unitId)
+      .limit(1)
+    if (occupantError) {
+      console.error('Occupant check failed', occupantError.code)
+      return json(500, { error: 'The flat could not be checked. Please try again.' })
+    }
+    if (occupant && occupant.length > 0) {
+      return json(409, { error: 'That flat already has a tenant. Remove them before inviting someone new.' })
+    }
   }
 
   const since = new Date(Date.now() - HOUR_MS).toISOString()
@@ -118,6 +132,7 @@ Deno.serve(async (request) => {
     role: invite.role,
     full_name: invite.full_name,
     phone: invite.phone,
+    email: invite.email,
     landlord_id: profile.id,
     unit_id: invite.unit_id,
     trade: invite.trade,

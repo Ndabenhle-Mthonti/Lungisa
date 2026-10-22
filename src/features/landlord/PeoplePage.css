@@ -73,12 +73,31 @@
   padding: 0;
 }
 
+.people-note {
+  margin: 0 0 var(--space-sm);
+}
+
 .people-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.people-person {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--space-sm) 0;
-  border-bottom: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+.people-person-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
 }
 
 .people-name {
