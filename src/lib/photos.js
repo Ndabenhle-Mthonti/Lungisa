@@ -3,23 +3,40 @@ import { supabase } from './supabaseClient.js'
 
 const TEN_MB = 10 * 1024 * 1024
 const SIGNED_URL_SECONDS = 60 * 60
-const ALLOWED_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif'])
+const MAX_EDGE = 1280
+const ALLOWED_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/heic',
+  'image/heif',
+  'image/heic-sequence',
+  'image/heif-sequence',
+])
 
-// Shrinks a phone photo to a JPEG. The long edge is about 1280px and the file stays under about 400 KB.
+// Shrinks a phone photo to a JPEG. The long edge is about 1280px.
 // The picture is drawn again as a new JPEG, so EXIF is dropped, including where it was taken.
+// iPhone photos are often HEIC. The usual compressor rejects those, so Safari draws them instead.
 export async function compressPhoto(file) {
   if (!isAllowedPhoto(file)) {
-    throw new Error('Please choose a JPEG, PNG, or HEIC photo.')
+    throw new Error('Please choose a photo from your camera or photo library.')
   }
   if (file.size > TEN_MB) {
     throw new Error('This photo is too large. Please choose one under 10 MB.')
+  }
+
+  if (isHeic(file)) {
+    const drawn = await compressWithCanvas(file)
+    if (drawn) return drawn
   }
 
   try {
     // Loaded only when a photo is sent, so the job lists stay small.
     const { default: imageCompression } = await import('browser-image-compression')
     const compressed = await imageCompression(file, {
-      maxWidthOrHeight: 1280,
+      maxWidthOrHeight: MAX_EDGE,
       initialQuality: 0.7,
       maxSizeMB: 0.39,
       fileType: 'image/jpeg',
@@ -27,8 +44,53 @@ export async function compressPhoto(file) {
     })
     return new File([compressed], 'photo.jpg', { type: 'image/jpeg' })
   } catch {
+    const drawn = await compressWithCanvas(file)
+    if (drawn) return drawn
     throw new Error('This photo could not be prepared. Please try a different one.')
   }
+}
+
+// Uses the same decoder that showed the preview. That succeeds for iPhone photos the compressor refuses.
+function compressWithCanvas(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => {
+      const longest = Math.max(image.naturalWidth, image.naturalHeight) || 1
+      const scale = Math.min(1, MAX_EDGE / longest)
+      const width = Math.max(1, Math.round(image.naturalWidth * scale))
+      const height = Math.max(1, Math.round(image.naturalHeight * scale))
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        URL.revokeObjectURL(url)
+        resolve(null)
+        return
+      }
+      ctx.drawImage(image, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(url)
+          resolve(blob ? new File([blob], 'photo.jpg', { type: 'image/jpeg' }) : null)
+        },
+        'image/jpeg',
+        0.7,
+      )
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve(null)
+    }
+    image.src = url
+  })
+}
+
+function isHeic(file) {
+  const type = (file?.type || '').toLowerCase()
+  const name = (file?.name || '').toLowerCase()
+  return type.includes('heic') || type.includes('heif') || name.endsWith('.heic') || name.endsWith('.heif')
 }
 
 // Puts the file in a private bucket at the given path. A second upload of the same path is rejected.
@@ -124,7 +186,7 @@ function isAllowedPhoto(file) {
   const type = (file?.type || '').toLowerCase()
   if (ALLOWED_TYPES.has(type) || type.startsWith('image/')) return true
   const name = (file?.name || '').toLowerCase()
-  if (['.jpg', '.jpeg', '.png', '.heic', '.heif', '.webp'].some((ext) => name.endsWith(ext))) return true
+  if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif', '.bmp', '.tif', '.tiff'].some((ext) => name.endsWith(ext))) return true
   if (!type || type === 'application/octet-stream') return file.size > 0
   return false
 }
